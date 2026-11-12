@@ -114,8 +114,8 @@ h1 small{font-size:.7rem;letter-spacing:.3em;color:var(--mu);font-weight:500;mar
 .us{display:flex;gap:12px;align-items:center;border-top:1px solid var(--ln);margin-top:22px;padding-top:18px;font-weight:600}
 .us i{width:38px;height:38px;border-radius:50%;background:var(--tint);display:grid;place-items:center;font-style:normal;color:var(--ok)}
 main{max-width:1040px;width:100%;margin:0;padding:34px 46px 80px}
-.bare{display:block}.bare #sd{display:none}.bare main{margin:0 auto;max-width:640px;padding:26px 20px 80px}
-header{display:none}.bare header{display:flex}
+#shell.bare{display:block}.bare #sd{display:none}.bare main{margin:0 auto;max-width:640px;padding:26px 20px 80px}
+header{display:none}body.bare header{display:flex;max-width:640px;margin:0 auto;border:0;padding-left:20px;padding-right:20px}
 .bc{display:flex;justify-content:space-between;color:var(--mu);font-size:.92rem;margin-bottom:56px}
 .bc .dt:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ok);margin-right:8px;vertical-align:middle}
 h2{font-size:2rem}.gr{font-size:3.4rem;font-weight:600;letter-spacing:-.04em;margin:0 0 14px}
@@ -162,6 +162,7 @@ main{padding:20px 18px 110px}
 .bc{margin-bottom:24px}.bc .dt{display:none}.gr{font-size:2.3rem}
 .hero2{padding:26px 22px}.hero2 h3{font-size:1.7rem}
 }
+#fp{background:var(--p);border:1px solid var(--ln);border-radius:20px;padding:8px 26px 26px;margin-top:14px}#fp .row{margin-top:24px}#fp h2{margin-top:22px}#av:empty{display:none}.bare main{padding-top:10px}.bare h2{font-size:1.9rem}
 </style>
 </head>
 <body>
@@ -390,9 +391,9 @@ $("#so").onclick=()=>signOut(auth);
 $("#de").onclick=async()=>{if(confirm("Effacer ton profil et ta progression ? C’est définitif.")){data={p:null,done:{},tests:[],logs:{},checks:{},theme:data.theme};await save();tab="a";step=0;render()}}}
 
 function render(){const sh=$("#shell"),em=user?(user.email||"?"):"";document.documentElement.dataset.t=data.theme||"d";$("#av").textContent=em[0]?em[0].toUpperCase():"";
-if(!user){sh.classList.add("bare");return viewAuth()}
-if(!data.p||editing){sh.classList.add("bare");return viewForm()}
-sh.classList.remove("bare");$("#av2").textContent=(data.p.prenom||em)[0].toUpperCase();$("#un").textContent=data.p.prenom||em.split("@")[0];
+if(!user){sh.classList.add("bare");document.body.classList.add("bare");return viewAuth()}
+if(!data.p||editing){sh.classList.add("bare");document.body.classList.add("bare");return viewForm()}
+sh.classList.remove("bare");document.body.classList.remove("bare");$("#av2").textContent=(data.p.prenom||em)[0].toUpperCase();$("#un").textContent=data.p.prenom||em.split("@")[0];
 $("#nv").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));({a:viewHome,c:viewMe,p:viewProg,s:viewTrack,e:viewEp,g:viewGu})[tab]()}
 $("#nv").onclick=e=>{const b=e.target.closest("button");if(b){tab=b.dataset.t;render();scrollTo(0,0)}};
 onAuthStateChanged(auth,async u=>{user=u;editing=false;wk=0;data={p:null,done:{},tests:[],logs:{},checks:{}};
