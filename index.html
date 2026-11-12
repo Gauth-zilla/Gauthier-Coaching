@@ -5,43 +5,104 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Gauthier’s coaching</title>
 <style>
-:root{--bg:#f7f8f9;--ink:#14181f;--mu:#5b6470;--ac:#1f4e79;--ln:#d9dde2;--wh:#fff;--ok:#2e7d4f;--er:#a3331f}
-@media(prefers-color-scheme:dark){:root{--bg:#14181f;--ink:#eceff2;--mu:#9aa4b0;--ac:#7fb0dc;--ln:#2d3540;--wh:#1b212a;--ok:#6cc08d;--er:#f08a76}}
+:root{--bg:#101112;--p:#181a1c;--p2:#212528;--ln:#2a2e32;--ink:#eef0f1;--mu:#9aa0a6;--ac:#8fb8e0;--on:#0b1016;--ok:#6cc08d;--er:#f08a76}
+:root[data-t=l]{--bg:#f3f4f5;--p:#fff;--p2:#eceef0;--ln:#dcdfe3;--ink:#14181d;--mu:#5c6570;--ac:#1f4e79;--on:#fff;--ok:#2e7d4f;--er:#a3331f}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
-header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--ln);background:var(--wh)}
-h1,h2,h3{font-family:Georgia,"Times New Roman",serif;margin:0}
-h1{font-size:1.25rem}h2{font-size:1.35rem;margin:30px 0 10px}h3{font-size:1.05rem}
-main{max-width:760px;margin:0 auto;padding:6px 20px 70px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:max(12px,env(safe-area-inset-top)) 20px 12px;background:var(--bg);border-bottom:1px solid var(--ln)}
+h1{font-size:1.1rem;margin:0;font-weight:700}
+#av{width:34px;height:34px;border-radius:50%;background:var(--p2);display:grid;place-items:center;font-size:.9rem;border:1px solid var(--ln)}
+h2{font-size:1.8rem;line-height:1.15;letter-spacing:-.025em;margin:6px 0 14px;font-weight:800}
+h3{font-size:1.1rem;margin:0 0 6px}
+main{max-width:720px;margin:0 auto;padding:20px 18px 110px}
 input,select,textarea,button{font:inherit;color:inherit}
-input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--ln);border-radius:4px;background:var(--wh);margin-top:4px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--ln);border-radius:10px;background:var(--p2);margin-top:4px}
 label.f{display:block;margin-top:12px;font-weight:600;font-size:.92rem}
 label.f small{display:block;font-weight:400;color:var(--mu)}
-label.c{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
+label.c{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
 label.c input{width:auto;margin:4px 0 0}
+.lb{font-weight:600;margin:18px 0 8px}
 .g{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
 @media(max-width:520px){.g{grid-template-columns:1fr}}
-button{cursor:pointer;border:1px solid var(--ac);background:var(--ac);color:#fff;padding:9px 16px;border-radius:4px}
+button{cursor:pointer;border:1px solid var(--ac);background:var(--ac);color:var(--on);padding:10px 18px;border-radius:10px;font-weight:600}
 button.o{background:transparent;color:var(--ac)}
 :focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-.card{background:var(--wh);border:1px solid var(--ln);border-radius:4px;padding:14px 16px;margin:10px 0}
-.k{display:flex;flex-wrap:wrap;gap:12px 30px}.k b{display:block;font:700 1.4rem Georgia,serif}
-.k span,.mu{color:var(--mu);font-size:.9rem}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
-.tabs button{background:transparent;color:var(--ink);border-color:var(--ln);padding:6px 13px}
-.tabs button.dn{border-color:var(--ok)}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
-.s ul{margin:6px 0 0 18px;padding:0}.s li{margin:3px 0}
-.s label{display:flex;gap:10px;align-items:center;cursor:pointer}
-.s input{width:auto;margin:0}
-.warn{border-left:4px solid var(--er);padding:8px 12px;background:var(--wh);margin:12px 0}
-.bar{height:6px;background:var(--ln);border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}
-table{width:100%;border-collapse:collapse;font-size:.92rem}td,th{padding:6px 4px;border-bottom:1px solid var(--ln);text-align:left}
-#fl{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:4px;display:none}
+a{color:var(--ac)}
+.mu{color:var(--mu);font-size:.92rem}
+.card{background:var(--p);border:1px solid var(--ln);border-radius:14px;padding:16px;margin:12px 0}
+.hero{display:flex;gap:18px;align-items:center;background:var(--p);border:1px solid var(--ln);border-radius:18px;padding:18px;margin:14px 0}
+.hero p{margin:4px 0}
+.ring{flex:none;width:92px;height:92px;border-radius:50%;background:conic-gradient(var(--ac) calc(var(--v)*1%),var(--ln) 0);display:grid;place-items:center}
+.ring i{width:72px;height:72px;border-radius:50%;background:var(--p);display:grid;place-items:center;font-style:normal;font-weight:800}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+.tiles div{background:var(--p);border:1px solid var(--ln);border-radius:14px;padding:14px}
+.tiles b{display:block;font-size:1.6rem;font-weight:800;letter-spacing:-.02em}
+.wk{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px}
+.wk button{flex:none;background:var(--p);color:var(--ink);border-color:var(--ln);padding:8px 14px}
+.wk .dn{border-color:var(--ok)}.wk .on{background:var(--ac);color:var(--on);border-color:var(--ac)}
+.s .sh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.s .sh span{margin-left:8px}.s em{color:var(--ok);font-style:normal;font-size:.85rem}
+.s ul{list-style:none;margin:10px 0 14px;padding:0}
+.s li{padding:9px 0;border-top:1px solid var(--ln);display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+.q{flex:none;width:30px;height:30px;padding:0;border-radius:50%;background:transparent;color:var(--ac);border:1px solid var(--ln)}
+.ch{display:grid;gap:8px}.ch.r{grid-template-columns:repeat(auto-fit,minmax(70px,1fr))}
+.ch label{position:relative;display:block}
+.ch input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.ch span{display:block;padding:12px 14px;border:1px solid var(--ln);border-radius:12px;background:var(--p)}
+.ch small{display:block;color:var(--mu);font-size:.85rem}
+.ch input:checked+span{border-color:var(--ac);background:var(--p2);box-shadow:inset 0 0 0 1px var(--ac)}
+.ch input:focus-visible+span{outline:2px solid var(--ac)}
+.warn{border-left:4px solid var(--er);padding:10px 14px;background:var(--p);border-radius:0 10px 10px 0;margin:12px 0}
+.bar{height:6px;background:var(--ln);border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:7px 4px;border-bottom:1px solid var(--ln);text-align:left}
+#nv{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:4px;padding:8px 10px max(8px,env(safe-area-inset-bottom));background:var(--p);border-top:1px solid var(--ln);z-index:6}
+#nv[hidden]{display:none}
+#nv button{flex:1;max-width:150px;background:none;border:0;color:var(--mu);padding:9px 4px;border-radius:10px;font-size:.85rem}
+#nv button.on{color:var(--ac);background:var(--p2)}
+dialog{background:var(--p);color:var(--ink);border:1px solid var(--ln);border-radius:18px;max-width:560px;width:calc(100% - 28px);padding:20px;max-height:86vh;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.6)}dialog ol{padding-left:20px}dialog li{margin:6px 0}
+#fl{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:10px;display:none;z-index:9}
+
+:root{--bg:#0f1113;--p:#16191c;--p2:#1d2125;--ln:#262b30}
+body{font-feature-settings:"tnum";letter-spacing:.005em}
+main{max-width:680px;padding-top:26px}
+h1{font-weight:600;letter-spacing:.01em}
+h2{font-size:1.7rem;font-weight:700}
+h3{font-weight:650;margin-top:4px}
+.card,.hero,.ct,.tiles div{border-radius:16px}
+.card{padding:18px}
+.hero{padding:22px;gap:22px}
+.hero>div:last-child b{font-size:1.2rem;letter-spacing:-.01em}
+.ring{width:96px;height:96px}.ring i{width:80px;height:80px;font-size:1.15rem}
+.tiles div{border-color:transparent;background:var(--p2)}
+.tiles b{font-size:1.75rem;font-weight:700}
+button{min-height:44px;border-radius:12px;letter-spacing:.01em}
+button.o{border-color:var(--ln);color:var(--ink)}
+.s{transition:border-color .2s}
+.s:has(em){border-left:3px solid var(--ok)}
+.s li{font-size:.95rem}
+#nv{padding-top:6px;box-shadow:0 -8px 24px rgba(0,0,0,.18)}
+#nv button{font-size:.74rem;min-height:52px;border-radius:12px}
+#nv svg{display:block;margin:0 auto 3px;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:560px){.cg{grid-template-columns:1fr}}
+.ct{background:var(--p);border:1px solid var(--ln);padding:16px 16px 12px}
+.ct h4{margin:0;font-size:.88rem;font-weight:600;color:var(--mu)}
+.dl{font-size:1.6rem;font-weight:700;margin:2px 0 6px;letter-spacing:-.02em}
+.dl small{font-size:.8rem;font-weight:500;margin-left:8px;color:var(--mu)}
+.dl.up small{color:var(--ok)}.dl.dw small{color:var(--er)}
+.ct svg{width:100%;height:auto;display:block}
+.ax{display:flex;justify-content:space-between;color:var(--mu);font-size:.78rem;margin-top:2px}
+.ct.w{grid-column:1/-1}
+:root[data-t=l]{--bg:#f6f7f8;--ln:#e1e4e8;--p2:#f0f2f4}
 </style>
 </head>
 <body>
-<header><h1>Gauthier’s coaching</h1><button class="o" id="out" hidden>Se déconnecter</button></header>
+<header><h1>Gauthier’s coaching</h1><b id="av"></b></header>
 <main id="app">Chargement… Si rien n’apparaît, vérifie ta connexion internet.</main>
+<nav id="nv" hidden><button data-t="a"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>Accueil</button><button data-t="p"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Programme</button><button data-t="s"><svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V4M16 20v-6M2 20h20"/></svg>Suivi</button><button data-t="c"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/></svg>Profil</button></nav>
+<dialog id="dg"></dialog>
 <div id="fl" role="status"></div>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
@@ -54,7 +115,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const mm=s=>Math.floor(s/60)+":"+String(R(s%60)).padStart(2,"0");
 const tsec=t=>{const m=String(t||"").match(/^(\d{1,2})[:'](\d{2})$/);return m?+m[1]*60+ +m[2]:0};
 const r5=x=>Math.max(10,R(x/5)*5);
-let user=null,data={p:null,done:{},tests:[]},wk=0,editing=false;
+let user=null,data={p:null,done:{},tests:[],logs:{},checks:{}},wk=0,editing=false;
 function flash(t){const f=$("#fl");f.textContent=t;f.style.display="block";clearTimeout(flash.t);flash.t=setTimeout(()=>f.style.display="none",2500)}
 async function save(){try{await setDoc(doc(db,"clients",user.uid),data);flash("Enregistré")}catch(e){flash("Échec de l’enregistrement ("+(e.code||"réseau")+")")}}
 const ERR={"auth/invalid-credential":"E-mail ou mot de passe incorrect.","auth/email-already-in-use":"Un compte existe déjà avec cet e-mail.","auth/weak-password":"Mot de passe trop court (6 caractères minimum).","auth/invalid-email":"Adresse e-mail invalide.","auth/network-request-failed":"Pas de connexion internet."};
@@ -113,7 +174,7 @@ if(w>0)it.push("Sauts en longueur sans élan : 4 × 4, repos complet entre les s
 it.push("Lancers de ballon de 3 kg (ou lancers poitrine contre un mur) : 3 × 8, explosifs");
 if(ok&&SP[w]&&!spd++)it.push(`Sprint (une seule séance par semaine) : ${Math.max(4,R(SP[w][0]*[.7,.9,1][L]))} × 25 m puis ${Math.max(3,R(SP[w][1]*[.7,.9,1][L]))} × 50 m à vitesse maximale, retour en trottinant, 3 min de repos entre les deux séries. Fais quelques départs couché sur le dos (épreuve du 24 m).`);
 it.push(cd)}
-else{nm="Test blanc";d="50 min";it=["Échauffement 15 min","Pompes 2 min · Sit-ups 2 min · Saut en longueur (3 essais) · Course 24 m couché au départ · Lancer ballon 3 kg (3 essais) · Course 2400 m chronométrée","Note tes résultats dans la section Tests, en bas de page."]}
+else{nm="Test blanc";d="50 min";it=["Échauffement 15 min","Pompes 2 min · Sit-ups 2 min · Saut en longueur (3 essais) · Course 24 m couché au départ · Lancer ballon 3 kg (3 essais) · Course 2400 m chronométrée","Note tes résultats dans l’onglet Suivi."]}
 return{nm,d,it}});
 return{t,f:FOC[w],s}})}
 
@@ -130,60 +191,132 @@ const fail=e=>$("#er").textContent=ERR[e.code]||"Une erreur est survenue. Réess
 f.onsubmit=async ev=>{ev.preventDefault();const e=f.e.value.trim(),m=f.m.value;try{act==="up"?await createUserWithEmailAndPassword(auth,e,m):await signInWithEmailAndPassword(auth,e,m)}catch(x){fail(x)}};
 $("#rs").onclick=async ev=>{ev.preventDefault();const e=f.e.value.trim();if(!e){$("#er").textContent="Saisis ton e-mail ci-dessus.";return}try{await sendPasswordResetEmail(auth,e);flash("E-mail de réinitialisation envoyé")}catch(x){fail(x)}}}
 
-function fld(l,n,v,o={}){return`<label class="f">${l}${o.h?`<small>${o.h}</small>`:""}<input name="${n}" type="${o.t||"number"}" ${o.t?"":'step="any" inputmode="decimal"'} value="${esc(v??"")}" ${o.r?"required":""}></label>`}
-function sel(l,n,opts,v,h){return`<label class="f">${l}${h?`<small>${h}</small>`:""}<select name="${n}" required><option value="">Choisir…</option>${opts.map(([k,t])=>`<option value="${k}"${String(v)===String(k)?" selected":""}>${t}</option>`).join("")}</select></label>`}
+const G=[
+[/2400 m chronométrée/,"Test blanc","Échauffe-toi 15 min, puis passe les épreuves dans l’ordre de l’Armée si possible.|Repose-toi 2 à 3 min entre les épreuves.|Sur le 2400 m, pars à une allure tenable : 6 tours de piste à vitesse régulière.|Note chaque résultat dans l’onglet Suivi.","Partir trop vite sur le 2400 m et s’écrouler au 3e tour.","Fais 3 épreuves aujourd’hui et le reste demain.","Chronomètre chaque tour de piste pour rester régulier."],
+[/× \(/,"Fractionné","Après l’échauffement, cours la durée ou la distance indiquée à allure soutenue mais contrôlée (7 à 8 sur 10).|Récupère en trottinant ou en marchant, sans t’arrêter complètement.|Garde la même vitesse sur toutes les répétitions.","Faire la première répétition à fond puis ralentir.","Ralentis l’allure ou allonge la récupération.","Raccourcis la récupération de 10 à 15 secondes."],
+[/course continue|sortie longue|marche rapide|vélo/,"Course à allure facile","Cours à une vitesse où tu peux parler en phrases complètes.|Garde un pas régulier, épaules relâchées, regard devant.|Respire sans forcer.","Courir trop vite : première cause d’abandon et de blessure.","Alterne course et marche (4 min / 1 min).","Allonge de 5 minutes à la fois."],
+[/course lente/,"Course et marche","Cours très lentement la durée indiquée, plus lentement que ce que tu penses.|Marche ensuite pour récupérer, sans t’arrêter.|Répète le nombre de fois demandé.","Courir trop vite dès la première minute.","Marche plus longtemps entre deux courses.","Passe à la suite quand tu finis sans être essoufflé."],
+[/échauffement/,"Échauffement","Marche ou trottine 5 min en augmentant doucement le rythme.|Fais des cercles d’épaules et de hanches, puis des fentes dynamiques.|Termine par 2 accélérations progressives de 10 secondes.","Sauter l’échauffement quand on manque de temps.","Réduis à 6 minutes, ne le supprime pas.","Ajoute 2 séries légères de l’exercice du jour."],
+[/pompe|push-up/,"Pompes","Mains un peu plus larges que les épaules, corps aligné de la tête aux talons.|Descends en gardant les coudes à environ 45° jusqu’à frôler le sol.|Remonte en tendant les bras sans cambrer le dos.|Au test, garde un rythme régulier pendant 2 minutes.","Bassin qui tombe, amplitude trop courte, coudes écartés à 90°.","Mains surélevées (banc, table) ou sur les genoux.","Pieds surélevés ou pause d’1 seconde en bas."],
+[/sit-up/,"Sit-ups","Sur le dos, jambes fléchies, pieds bloqués, mains croisées sur la poitrine.|Monte jusqu’à toucher les genoux avec les coudes.|Redescends jusqu’aux omoplates au sol, sans élan.","Tirer sur la nuque, monter avec élan.","Réduis l’amplitude.","Mains derrière les tempes, rythme plus soutenu."],
+[/burpee/,"Burpees","Debout, accroupis-toi et pose les mains au sol.|Lance les pieds en arrière en position de pompe.|Ramène les pieds sous toi et saute bras tendus.","Dos creusé en position de pompe, réception raide.","Retire le saut ou avance plus lentement.","Ajoute une pompe à chaque répétition."],
+[/planche|gainage/,"Planche","Avant-bras au sol, coudes sous les épaules, corps droit.|Serre abdos et fessiers, regarde le sol.|Respire normalement.","Dos creusé, fesses en l’air, respiration bloquée.","Appuie-toi sur les genoux.","Lève un bras ou une jambe en alternance."],
+[/sprint/,"Sprint et départ couché","Après un échauffement complet, place-toi sur le dos pour les départs couchés.|Au signal, relève-toi vite et accélère à vitesse maximale.|Reviens en trottinant : la récupération compte autant que l’effort.","Sprinter sans échauffement : risque de claquage.","Réduis les répétitions de moitié.","Ne rajoute rien : une séance de sprint par semaine suffit."],
+[/saut/,"Saut en longueur sans élan","Pieds largeur d’épaules, genoux fléchis, bras en arrière.|Balance les bras vers l’avant et saute le plus loin possible.|Réceptionne pieds joints, genoux souples.","Réception sur les talons, buste trop penché.","Sauts plus courts avec plus de repos.","Fléchis plus bas avant la poussée."],
+[/ballon|lancer/,"Lancer de ballon","Assis, dos droit, ballon tenu à deux mains au-dessus de la poitrine.|Pousse et lance le plus loin possible, vers 45°.|Récupère entre chaque lancer.","Lancer avec les bras seulement, sans le tronc.","Utilise un ballon plus léger.","Ajoute une impulsion du buste vers l’avant."],
+[/développé|dips/,"Développés et dips","Épaules basses et serrées, pieds bien posés.|Descends en contrôle, remonte sans verrouiller les coudes.|Choisis une charge qui te laisse la marge indiquée.","Charge trop lourde, rebond sur la poitrine.","Allège la charge.","Ralentis la descente (3 secondes)."],
+[/élévations/,"Élévations latérales","Haltères légers, coudes légèrement fléchis.|Monte les bras sur les côtés à hauteur d’épaules.|Redescends lentement.","Balancer le corps pour monter la charge.","Allège la charge.","Pause d’1 seconde en haut."],
+[/tirage|rowing|superman/,"Tirages et rowing","Poitrine ouverte, épaules basses, dos plat.|Tire en ramenant les coudes vers l’arrière, serre les omoplates.|Reviens lentement bras tendus.","Hausser les épaules, balancer le buste.","Charge ou élastique plus léger.","Pause d’1 seconde en contraction."],
+[/curl/,"Curl biceps","Coudes collés au corps, épaules relâchées.|Monte l’haltère jusqu’aux épaules sans balancer.|Redescends en 2 à 3 secondes.","Se pencher en arrière pour monter la charge.","Allège la charge.","Ralentis la descente."],
+[/squat|presse|bulgare/,"Squat et presse","Pieds largeur d’épaules, pointes légèrement ouvertes.|Descends en poussant le bassin vers l’arrière, genoux dans l’axe des pieds.|Remonte en poussant dans les talons.","Genoux qui rentrent, dos qui s’arrondit.","Squat sur banc ou amplitude réduite.","Pause de 2 secondes en bas."],
+[/fentes/,"Fentes","Grand pas en avant, buste droit.|Descends jusqu’à ce que le genou arrière frôle le sol.|Pousse dans le talon avant pour revenir.","Genou avant qui rentre vers l’intérieur.","Fentes statiques, mains sur les hanches.","Ajoute des haltères."],
+[/soulevé|pont fessier|mollets/,"Soulevé roumain, pont fessier, mollets","Soulevé : dos plat, genoux légèrement fléchis, bassin vers l’arrière.|Pont : serre les fessiers en haut.|Mollets : monte lentement sur la pointe des pieds.","Dos arrondi sur le soulevé.","Charge légère, amplitude réduite.","Fais l’exercice sur une jambe."]];
+const gfind=x=>G.findIndex(g=>new RegExp(g[0].source,"i").test(x));
+const OBJ={polyvalent:"Réussir le test",cardio:"Cardio et vitesse",endurance:"Endurance",hypertrophie:"Prise de muscle"},NIV=["Débutant","Intermédiaire","Avancé"];
+const today=()=>new Date().toISOString().slice(0,10);
+const ctx=()=>{const p=data.p,P=gen(p);return{p,m:calc(p),P,tot:P.reduce((a,w)=>a+w.s.length,0),dn:Object.values(data.done).filter(Boolean).length}};
+const nextS=P=>{for(let w=0;w<8;w++)for(let j=0;j<P[w].s.length;j++)if(!data.done[w+"-"+j])return[w,j];return null};
+let tab="a",step=0;
+const dg=$("#dg");dg.onclick=e=>{if(e.target===dg)dg.close()};
+const modal=h=>{dg.innerHTML=h+'<p><button class="o" data-x>Fermer</button></p>';dg.querySelector("[data-x]").onclick=()=>dg.close();if(!dg.open)dg.showModal()};
+const fld=(l,n,v,o={})=>`<label class="f">${l}${o.h?`<small>${o.h}</small>`:""}<input name="${n}" type="${o.t||"number"}" ${o.t?"":'step="any" inputmode="decimal"'} value="${esc(v??"")}" ${o.r?"required":""}></label>`;
+const lb=t=>`<p class="lb">${t}</p>`;
+const chp=(n,o,v,row)=>`<div class="ch${row?" r":""}">${o.map(([k,t,s])=>`<label><input type="radio" name="${n}" value="${k}" ${String(v)===String(k)?"checked":""} required><span><b>${t}</b>${s?`<small>${s}</small>`:""}</span></label>`).join("")}</div>`;
+
 function viewForm(){const p=data.p||{};
-A.innerHTML=`<h2>Ton profil</h2><p class="mu">Plus tu réponds précisément, plus ton programme est adapté. Les champs marqués d’une * sont obligatoires.</p>
-<form id="fp"><div class="card"><h3>Ton corps</h3><div class="g">
-${sel("Sexe *","sexe",[["h","Homme"],["f","Femme"]],p.sexe)}${fld("Âge *","age",p.age,{r:1})}${fld("Taille (cm) *","taille",p.taille,{r:1})}${fld("Poids (kg) *","poids",p.poids,{r:1})}</div>
-<h3 style="margin-top:18px">Masse grasse</h3><p class="mu">Si tu connais ton taux, saisis-le. Sinon, mesure ton tour de cou, de taille (au nombril) et de hanches (femmes) au mètre ruban. Sans rien, une estimation grossière sera faite.</p><div class="g">
-${fld("Taux de masse grasse connu (%)","mg",p.mg)}<span></span>${fld("Tour de cou (cm)","cou",p.cou)}${fld("Tour de taille (cm)","ta",p.ta)}${fld("Tour de hanches (cm)","hanc",p.hanc,{h:"Femmes seulement"})}</div></div>
-<div class="card"><h3>Ton niveau</h3><div class="g">
-${sel("Niveau sportif *","niveau",[[0,"Débutant (peu ou pas de sport)"],[1,"Intermédiaire (je m’entraîne régulièrement)"],[2,"Avancé (je m’entraîne depuis des années)"]],p.niveau)}
-${sel("Séances par semaine *","seances",[[2,"2"],[3,"3"],[4,"4"],[5,"5 (maximum conseillé par l’Armée)"]],p.seances,"Choisis ce que tu peux tenir toutes les semaines")}
-${sel("Peux-tu courir 30 min sans t’arrêter ? *","run30",[["oui","Oui"],["non","Non"]],p.run30)}
-${fld("Temps sur 5 km (min)","t5",p.t5,{h:"Optionnel, ex. 28,5"})}
-${sel("Objectif principal *","objectif",[["polyvalent","Réussir le test (polyvalent)"],["cardio","Cardio et vitesse (2400 m, sprint)"],["endurance","Endurance"],["hypertrophie","Prise de muscle"]],p.objectif)}
-${sel("Où t’entraînes-tu ? *","mat",[["salle","En salle (machines, haltères)"],["maison","À la maison (peu de matériel)"]],p.mat)}</div></div>
-<div class="card"><h3>Tes résultats actuels</h3><p class="mu">Teste-toi si tu peux, sinon laisse vide (on part du niveau choisi).</p><div class="g">
-${fld("Pompes en 2 min","pompes",p.pompes)}${fld("Sit-ups en 2 min","situps",p.situps)}${fld("Course 2400 m","t2400",p.t2400,{t:"text",h:"Format min:sec, ex. 11:30"})}${fld("Saut en longueur (cm)","saut",p.saut)}</div></div>
-<div class="card"><h3>Ta santé</h3><p class="mu">Coche ce qui te concerne.</p>
-${SANTE.map((s,i)=>`<label class="c"><input type="checkbox" name="s${i}" ${(p.sante||[]).includes(i)?"checked":""}>${s}</label>`).join("")}
-<label class="f">Blessures ou précisions<textarea name="notes" rows="2">${esc(p.notes)}</textarea></label></div>
-<p id="er" style="color:var(--er)"></p><button type="submit">Enregistrer et créer mon programme</button> ${data.p?'<button type="button" class="o" id="cx">Annuler</button>':""}</form>`;
-const f=$("#fp");if($("#cx"))$("#cx").onclick=()=>{editing=false;render()};
-f.onsubmit=async ev=>{ev.preventDefault();const g=n=>f[n].value,N=n=>g(n)===""?0:parseFloat(String(g(n)).replace(",","."));
+const S=[
+`<h2>Ton corps</h2><p class="mu">Ces mesures servent à calculer ton IMC et tes besoins.</p>${lb("Sexe")}${chp("sexe",[["h","Homme"],["f","Femme"]],p.sexe,1)}<div class="g">${fld("Âge","age",p.age,{r:1})}${fld("Taille (cm)","taille",p.taille,{r:1})}${fld("Poids (kg)","poids",p.poids,{r:1})}</div>`,
+`<h2>Masse grasse</h2><p class="mu">Si tu connais ton taux, saisis-le. Sinon, mesure-toi au mètre ruban et l’appli l’estime. Sans rien, elle fait une estimation grossière.</p><div class="g">${fld("Taux connu (%)","mg",p.mg)}<span></span>${fld("Tour de cou (cm)","cou",p.cou)}${fld("Tour de taille (cm)","ta",p.ta,{h:"Au niveau du nombril"})}${fld("Tour de hanches (cm)","hanc",p.hanc,{h:"Femmes seulement"})}</div>`,
+`<h2>Ton niveau</h2>${lb("Niveau sportif")}${chp("niveau",[[0,"Débutant","Peu ou pas de sport"],[1,"Intermédiaire","Je m’entraîne régulièrement"],[2,"Avancé","Je m’entraîne depuis des années"]],p.niveau)}${lb("Séances par semaine (choisis ce que tu peux tenir)")}${chp("seances",[[2,"2"],[3,"3"],[4,"4"],[5,"5"]],p.seances,1)}${lb("Peux-tu courir 30 min sans t’arrêter ?")}${chp("run30",[["oui","Oui"],["non","Non"]],p.run30,1)}${fld("Temps sur 5 km (min)","t5",p.t5,{h:"Optionnel, par exemple 28,5"})}`,
+`<h2>Ton objectif</h2>${chp("objectif",[["polyvalent","Réussir le test","Équilibre entre toutes les épreuves"],["cardio","Cardio et vitesse","2400 m, sprint, explosivité"],["endurance","Endurance","Plus de volume de course"],["hypertrophie","Prise de muscle","Plus de musculation, en gardant la course"]],p.objectif)}${lb("Où t’entraînes-tu ?")}${chp("mat",[["salle","En salle"],["maison","À la maison"]],p.mat,1)}`,
+`<h2>Tes résultats actuels</h2><p class="mu">Teste-toi si tu peux, sinon laisse vide : le programme part du niveau choisi.</p><div class="g">${fld("Pompes en 2 min","pompes",p.pompes)}${fld("Sit-ups en 2 min","situps",p.situps)}${fld("Course 2400 m","t2400",p.t2400,{t:"text",h:"min:sec, par exemple 11:30"})}${fld("Saut en longueur (cm)","saut",p.saut)}</div>`,
+`<h2>Ta santé</h2><p class="mu">Coche ce qui te concerne.</p>${SANTE.map((x,i)=>`<label class="c"><input type="checkbox" name="s${i}" ${(p.sante||[]).includes(i)?"checked":""}>${x}</label>`).join("")}<label class="f">Blessures ou précisions<textarea name="notes" rows="2">${esc(p.notes)}</textarea></label>`];
+A.innerHTML=`<div class="bar"><i id="pb"></i></div><p class="mu" id="pl"></p><form id="fp">${S.map((h,i)=>`<section data-s="${i}" hidden>${h}</section>`).join("")}<p id="er" style="color:var(--er)"></p><div class="row"><button type="button" class="o" id="bk"></button><button type="button" id="nx"></button></div></form>`;
+const f=$("#fp"),sec=[...f.querySelectorAll("[data-s]")];f.onsubmit=e=>e.preventDefault();
+const show=()=>{sec.forEach((e,i)=>e.hidden=i!==step);$("#pb").style.width=(step+1)/S.length*100+"%";$("#pl").textContent=`Étape ${step+1} sur ${S.length}`;$("#bk").textContent=step?"Retour":"Annuler";$("#bk").hidden=!step&&!data.p;$("#nx").textContent=step===S.length-1?"Créer mon programme":"Continuer";$("#er").textContent="";scrollTo(0,0)};
+show();
+$("#bk").onclick=()=>{if(step){step--;show()}else{editing=false;render()}};
+$("#nx").onclick=async()=>{if(![...sec[step].querySelectorAll("input,select")].every(i=>i.reportValidity()))return;
+if(step<S.length-1){step++;show();return}
+const g=n=>f[n].value,N=n=>g(n)===""?0:parseFloat(String(g(n)).replace(",","."));
 const q={sexe:g("sexe"),age:N("age"),taille:N("taille"),poids:N("poids"),mg:N("mg"),cou:N("cou"),ta:N("ta"),hanc:N("hanc"),niveau:+g("niveau"),seances:+g("seances"),run30:g("run30"),t5:N("t5"),objectif:g("objectif"),mat:g("mat"),pompes:N("pompes"),situps:N("situps"),t2400:g("t2400").trim(),saut:N("saut"),notes:g("notes").trim(),sante:SANTE.map((_,i)=>f["s"+i].checked?i:-1).filter(i=>i>=0)};
 const bad=q.age<14||q.age>70?"Âge invalide.":q.taille<120||q.taille>230?"Taille invalide (en cm).":q.poids<30||q.poids>250?"Poids invalide (en kg).":q.mg&&(q.mg<3||q.mg>60)?"Taux de masse grasse invalide.":q.t2400&&!tsec(q.t2400)?"Temps du 2400 m : écris-le comme 11:30.":"";
 if(bad){$("#er").textContent=bad;return}
 if(data.p&&Object.values(data.done).some(Boolean)&&!confirm("Modifier ton profil recrée ton programme et remet ta progression à zéro. Continuer ?"))return;
-if(data.p)data.done={};data.p=q;editing=false;await save();render()}}
+if(data.p)data.done={};data.p=q;editing=false;step=0;tab="a";await save();render()}}
 
-function viewDash(){const p=data.p,m=calc(p),P=gen(p),tot=P.reduce((a,w)=>a+w.s.length,0),dn=Object.values(data.done).filter(Boolean).length,W=P[wk];
-const med=(p.sante||[]).length>0;
-A.innerHTML=`<h2>Bonjour</h2>
-${med?`<div class="warn"><b>Avis médical nécessaire avant de commencer.</b> Tu as signalé un point de santé. Montre ce programme à ton médecin et fais-toi donner son accord. L’Armée demande de toute façon un certificat médical pour passer le test. En cas de douleur, vertige ou malaise, arrête immédiatement.</div>`:""}
-<div class="card"><div class="k"><div><b>${m.imc}</b><span>IMC, ${m.cat}</span></div><div><b>${m.mg} %</b><span>masse grasse</span></div><div><b>${m.kcal}</b><span>kcal par jour</span></div><div><b>${m.prot} g</b><span>protéines par jour</span></div></div>
-<p class="mu">Masse grasse ${m.src}. ${m.cap} L’IMC ne distingue pas le muscle du gras : un sportif musclé peut sortir en surpoids. Ces valeurs sont des estimations, pas un avis médical.</p></div>
-<p><button class="o" id="ed">Modifier mon profil</button></p>
-<h2>Mes 8 semaines</h2><div class="bar"><i style="width:${R(dn/tot*100)}%"></i></div><p class="mu">${dn} séances faites sur ${tot}</p>
-<div class="tabs">${P.map((w,i)=>`<button data-w="${i}" class="${i===wk?"on":""} ${w.s.every((_,j)=>data.done[i+"-"+j])?"dn":""}">Semaine ${i+1}</button>`).join("")}</div>
-<h3>Semaine ${wk+1} : ${W.t}</h3><p class="mu">${W.f}</p>
-${W.s.map((s,j)=>`<article class="card s"><label><input type="checkbox" data-k="${wk}-${j}" ${data.done[wk+"-"+j]?"checked":""}><b>${s.nm}</b><span class="mu">${s.d}</span></label><ul>${s.it.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></article>`).join("")}
-<h2>Tests</h2><p class="mu">Passe tes 6 épreuves toutes les 2 à 4 semaines et note les résultats pour suivre ta progression. Pour réussir le vrai test, il faut une moyenne de 10 sur 20, au moins 1 point à chaque épreuve et 8 points au 2400 m.</p>
-<form id="ft" class="card"><div class="g">${fld("Pompes en 2 min","a","")}${fld("Sit-ups en 2 min","b","")}${fld("Saut en longueur (cm)","c","")}${fld("Course 24 m (s)","d","")}${fld("Lancer ballon 3 kg (m)","e","")}${fld("Course 2400 m","f","",{t:"text",h:"min:sec"})}</div><p><button type="submit">Ajouter ce test</button></p></form>
-${data.tests.length?`<div class="card" style="overflow-x:auto"><table><tr><th>Date</th><th>Pompes</th><th>Sit-ups</th><th>Saut</th><th>24 m</th><th>Ballon</th><th>2400 m</th></tr>${data.tests.map(t=>`<tr><td>${esc(t.d)}</td><td>${esc(t.a)}</td><td>${esc(t.b)}</td><td>${esc(t.c)}</td><td>${esc(t.dd)}</td><td>${esc(t.e)}</td><td>${esc(t.f)}</td></tr>`).join("")}</table></div>`:""}`;
-$("#ed").onclick=()=>{editing=true;render()};
-A.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{wk=+b.dataset.w;render();scrollTo(0,0)});
-A.querySelectorAll("[data-k]").forEach(c=>c.onchange=async()=>{data.done[c.dataset.k]=c.checked;await save();render()});
+function viewHome(){const{p,m,P,tot,dn}=ctx(),nx=nextS(P),ck=data.checks[today()],v=R(dn/tot*100);
+A.innerHTML=`<p class="mu" style="margin:0">Bonjour</p><h2>Ta préparation, semaine après semaine.</h2>
+${(p.sante||[]).length?`<div class="warn"><b>Avis médical nécessaire avant de commencer.</b> Tu as signalé un point de santé : montre ce programme à ton médecin. L’Armée demande de toute façon un certificat médical pour le test. En cas de douleur, vertige ou malaise, arrête.</div>`:""}
+<section class="hero"><div class="ring" style="--v:${v}"><i>${v} %</i></div><div><b>${nx?`Semaine ${nx[0]+1} · ${P[nx[0]].t}`:"Programme terminé"}</b><p class="mu">${nx?`Prochaine séance : ${esc(P[nx[0]].s[nx[1]].nm)}, ${P[nx[0]].s[nx[1]].d}`:"Bravo ! Passe un dernier test dans Suivi."}</p><div class="row">${nx?'<button id="go">Voir ma séance</button>':""}<button class="o" id="ck">Bilan du jour</button></div></div></section>
+${ck?`<div class="card">${esc(ck.msg)}</div>`:""}
+<div class="tiles"><div><b>${m.imc}</b><span class="mu">IMC, ${m.cat}</span></div><div><b>${m.mg} %</b><span class="mu">masse grasse</span></div><div><b>${m.kcal}</b><span class="mu">kcal par jour</span></div><div><b>${m.prot} g</b><span class="mu">protéines par jour</span></div></div>
+<p class="mu">Masse grasse ${m.src}. ${m.cap} L’IMC ne distingue pas le muscle du gras. Ces valeurs sont des estimations, pas un avis médical.</p>`;
+if(nx)$("#go").onclick=()=>{tab="p";wk=nx[0];render();scrollTo(0,0)};
+$("#ck").onclick=openCheck}
+
+function viewProg(){const{P}=ctx(),W=P[wk];
+A.innerHTML=`<h2>Programme</h2><div class="wk">${P.map((w,i)=>`<button data-w="${i}" class="${i===wk?"on":""} ${w.s.every((_,j)=>data.done[i+"-"+j])?"dn":""}">Semaine ${i+1}</button>`).join("")}</div><h3>${W.t}</h3><p class="mu">${W.f}</p>
+${W.s.map((s,j)=>{const k=wk+"-"+j,d=data.done[k];return`<article class="card s"><div class="sh"><div><b>${esc(s.nm)}</b><span class="mu">${s.d}</span></div>${d?"<em>Fait</em>":""}</div><ul>${s.it.map(x=>{const g=gfind(x);return`<li><span>${esc(x)}</span>${g>=0?`<button class="q" data-g="${g}" aria-label="Comment faire cet exercice ?">?</button>`:""}</li>`}).join("")}</ul><button class="${d?"o":""}" data-l="${k}">${d?"Modifier mon bilan":"Terminer la séance"}</button></article>`}).join("")}`;
+A.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{wk=+b.dataset.w;render()});
+A.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const[,t,st,er,ez,hd]=G[b.dataset.g];modal(`<h3>${t}</h3><ol>${st.split("|").map(x=>`<li>${x}</li>`).join("")}</ol><p><b>Erreurs fréquentes</b><br>${er}</p><p><b>Trop dur ?</b> ${ez}<br><b>Trop facile ?</b> ${hd}</p><p class="mu">Douleur vive, vertige ou malaise : arrête l’exercice.</p>`)});
+A.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>openLog(b.dataset.l))}
+
+function openLog(k){const{P}=ctx(),[w,j]=k.split("-"),s=P[w].s[j],o=data.logs[k]||{};
+const op=(a,v)=>'<option value="">Choisir…</option>'+a.map(([x,t])=>`<option value="${x}"${o[v]===x?" selected":""}>${t}</option>`).join("");
+modal(`<h3>${esc(s.nm)}</h3><form id="fg"><label class="f">Difficulté ressentie<select name="rpe" required>${op([["2","2 – Très facile"],["4","4 – Facile"],["6","6 – Modérée"],["7","7 – Soutenue, contrôlée"],["8","8 – Difficile"],["9","9 – Très difficile"],["10","10 – Maximale"]],"rpe")}</select></label>
+<label class="f">Séance réalisée comme prévu ?<select name="ok" required>${op([["oui","Oui, y compris la version allégée"],["non","Non, interrompue ou partielle"]],"ok")}</select></label>
+<label class="f">Douleur inhabituelle pendant ou après ?<select name="pain" required>${op([["non","Non"],["oui","Oui : arrêter et faire le point"]],"pain")}</select></label>
+<label class="f">Sensations après la séance<select name="rec" required>${op([["bonne","Bonnes, gêne légère ou absente"],["tot","Trop tôt pour savoir"],["fatigue","Fatigue ou courbatures importantes"]],"rec")}</select></label>
+<label class="f">Notes, charges, répétitions (facultatif)<textarea name="notes" rows="2">${esc(o.notes)}</textarea></label><div class="row"><button type="submit">Enregistrer</button></div></form>`);
+$("#fg").onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target));data.logs[k]={...v,d:today(),n:s.nm};data.done[k]=v.ok==="oui";await save();render();
+if(v.pain==="oui")modal("<h3>Douleur signalée</h3><p>Ne refais pas l’exercice qui la provoque. Si elle persiste ou s’aggrave, demande un avis médical avant de reprendre.</p>");else dg.close()}}
+
+function openCheck(){modal(`<h3>Bilan du jour</h3><form id="fk"><label class="f">Sommeil de la dernière nuit (heures)<input name="so" type="number" step="0.5" min="0" max="14" required></label><label class="f">Fatigue générale (0 = aucune, 10 = épuisement)<input name="fa" type="number" min="0" max="10" required></label>
+<label class="f">Douleur inhabituelle, malaise ou symptôme nouveau ?<select name="dl" required><option value="">Choisir…</option><option value="n">Non</option><option value="o">Oui ou je ne suis pas sûr</option></select></label>
+<label class="f">Fièvre ou maladie aiguë aujourd’hui ?<select name="fv" required><option value="">Choisir…</option><option value="n">Non</option><option value="o">Oui</option></select></label><div class="row"><button type="submit">Adapter ma séance</button></div></form>`);
+$("#fk").onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target));
+const msg=v.dl==="o"||v.fv==="o"?"Reporte la séance d’aujourd’hui. Si la douleur ou les symptômes persistent, demande un avis médical avant de reprendre.":+v.so<6||+v.fa>=7?"Fais la séance en version allégée : environ 30 % de séries ou de durée en moins, allure plus lente, 6 sur 10 d’effort maximum.":"Feu vert : fais ta séance comme prévu.";
+data.checks[today()]={msg};await save();render();modal(`<h3>Ton bilan</h3><p>${msg}</p><p class="mu">Ce bilan aide à maintenir, alléger ou reporter. Ce n’est pas une validation médicale.</p>`)}}
+
+function chart(t,pts,fm,fd,nd,wide){
+if(pts.length<2)return`<div class="ct${wide?" w":""}"><h4>${t}</h4><p class="mu" style="margin:8px 0 4px">${pts.length?`Départ : ${fm(pts[0][1])}. `:""}Ajoute un résultat pour voir ta courbe.</p></div>`;
+const W=300,H=92,pd=8,v=pts.map(x=>x[1]),mn=Math.min(...v),mx=Math.max(...v),sp=mx-mn||1,X=i=>pd+i*(W-2*pd)/(pts.length-1),Y=y=>H-pd-(y-mn)/sp*(H-2*pd);
+const d=pts.map((x,i)=>`${i?"L":"M"}${X(i).toFixed(1)} ${Y(x[1]).toFixed(1)}`).join(""),dl=v[v.length-1]-v[0],up=nd?"":dl*(nd===0?1:fd.inv?-1:1)>=0?"up":"dw";
+return`<div class="ct${wide?" w":""}"><h4>${t}</h4><p class="dl ${up}">${fm(v[v.length-1])}${nd?"":`<small>${fd(dl)} depuis le départ</small>`}</p><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${t}"><path d="${d}" fill="none" stroke="var(--ac)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${pts.map((x,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(x[1]).toFixed(1)}" r="3.5" fill="var(--p)" stroke="var(--ac)" stroke-width="2"/>`).join("")}</svg><div class="ax"><span>${pts[0][0]}</span><span>${pts[pts.length-1][0]}</span></div></div>`}
+function charts(){const{p,P}=ctx(),T=data.tests,sg=v=>(v>0?"+":"−")+Math.abs(R(v)),tm=v=>(v>0?"+":"−")+mm(Math.abs(v));tm.inv=1;
+const ser=(k,tk)=>{const o=p[k]>0?[["Départ",p[k]]]:[];T.forEach(t=>{const x=parseFloat(String(t[tk]).replace(",","."));if(x>0)o.push([t.d.slice(0,5),x])});return o};
+const t24=(p.t2400&&tsec(p.t2400)?[["Départ",tsec(p.t2400)]]:[]).concat(T.filter(t=>tsec(t.f)).map(t=>[t.d.slice(0,5),tsec(t.f)]));
+const lg=Object.values(data.logs).filter(l=>+l.rpe>0).sort((a,b)=>a.d.localeCompare(b.d)).map(l=>[l.d.slice(8)+"/"+l.d.slice(5,7),+l.rpe]);
+const W=300,H=92,bw=24,gp=(W-8*bw)/9,bars=P.map((w,i)=>{const n=w.s.length,d=w.s.filter((_,j)=>data.done[i+"-"+j]).length,x=gp+i*(bw+gp),h=H-22;return`<rect x="${x}" y="${H-18-h}" width="${bw}" height="${h}" rx="4" fill="var(--ln)"/><rect x="${x}" y="${H-18-h*d/n}" width="${bw}" height="${h*d/n}" rx="4" fill="var(--ac)"/><text x="${x+bw/2}" y="${H-3}" text-anchor="middle" font-size="10" fill="var(--mu)">${i+1}</text>`}).join("");
+return chart("Pompes en 2 min",ser("pompes","a"),R,sg)+chart("Sit-ups en 2 min",ser("situps","b"),R,sg)+chart("Course 2400 m",t24,mm,tm)+chart("Saut en longueur (cm)",ser("saut","c"),R,sg)
++`<div class="ct w"><h4>Séances faites par semaine</h4><p class="dl">${Object.values(data.done).filter(Boolean).length}<small>sur ${P.reduce((a,w)=>a+w.s.length,0)} prévues</small></p><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Séances faites par semaine">${bars}</svg></div>`
++chart("Effort ressenti par séance (sur 10)",lg,R,sg,1,1)}
+function viewTrack(){const L=Object.entries(data.logs).sort((a,b)=>b[1].d.localeCompare(a[1].d));
+A.innerHTML=`<h2>Suivi</h2><h3>Progression</h3><div class="cg">${charts()}</div><h3 style="margin-top:26px">Tests</h3><p class="mu">Passe tes 6 épreuves toutes les 2 à 4 semaines et note les résultats. Pour réussir le vrai test : moyenne de 10 sur 20, au moins 1 point à chaque épreuve et 8 points au 2400 m.</p>
+<form id="ft" class="card"><div class="g">${fld("Pompes en 2 min","a","")}${fld("Sit-ups en 2 min","b","")}${fld("Saut en longueur (cm)","c","")}${fld("Course 24 m (s)","d","")}${fld("Lancer ballon 3 kg (m)","e","")}${fld("Course 2400 m","f","",{t:"text",h:"min:sec"})}</div><div class="row"><button type="submit">Ajouter ce test</button></div></form>
+${data.tests.length?`<div class="card" style="overflow-x:auto"><table><tr><th>Date</th><th>Pompes</th><th>Sit-ups</th><th>Saut</th><th>24 m</th><th>Ballon</th><th>2400 m</th></tr>${data.tests.map(t=>`<tr><td>${esc(t.d)}</td><td>${esc(t.a)}</td><td>${esc(t.b)}</td><td>${esc(t.c)}</td><td>${esc(t.dd)}</td><td>${esc(t.e)}</td><td>${esc(t.f)}</td></tr>`).join("")}</table></div>`:""}
+<h3 style="margin-top:22px">Séances terminées</h3>${L.length?`<div class="card" style="overflow-x:auto"><table><tr><th>Date</th><th>Séance</th><th>Effort</th><th>Douleur</th></tr>${L.map(([,l])=>`<tr><td>${esc(l.d)}</td><td>${esc(l.n)}</td><td>${esc(l.rpe)}/10</td><td>${l.pain==="oui"?"oui":"non"}</td></tr>`).join("")}</table></div>`:'<p class="mu">Rien pour l’instant. Termine une séance dans Programme pour la retrouver ici.</p>'}`;
 $("#ft").onsubmit=async ev=>{ev.preventDefault();const f=ev.target;if(f.f.value&&!tsec(f.f.value)){flash("2400 m : écris le temps comme 11:30");return}
 data.tests.push({d:new Date().toLocaleDateString("fr-BE"),a:f.a.value,b:f.b.value,c:f.c.value,dd:f.d.value,e:f.e.value,f:f.f.value});await save();render()}}
 
-function render(){$("#out").hidden=!user;
-if(!user)return viewAuth();
-if(!data.p||editing)return viewForm();viewDash()}
-$("#out").onclick=()=>signOut(auth);
-onAuthStateChanged(auth,async u=>{user=u;editing=false;wk=0;data={p:null,done:{},tests:[]};
+function viewMe(){const p=data.p;
+A.innerHTML=`<h2>Profil</h2><div class="card"><p style="margin:0"><b>${esc(user.email)}</b></p><p class="mu" style="margin:6px 0 0">${p.age} ans · ${p.taille} cm · ${p.poids} kg · ${NIV[p.niveau]} · ${p.seances} séances par semaine · ${OBJ[p.objectif]}</p></div>
+<p class="mu">Ton profil et ta progression sont enregistrés en ligne dans ton compte : tu les retrouves sur n’importe quel appareil.</p>
+<div class="row"><button id="pe">Modifier mon profil</button><button class="o" id="th">Thème ${data.theme==="l"?"sombre":"clair"}</button><button class="o" id="ex">Exporter mes données</button><button class="o" id="so">Se déconnecter</button></div>
+<p style="margin-top:28px"><button class="o" id="de" style="color:var(--er);border-color:var(--er)">Effacer mon profil</button></p>`;
+$("#pe").onclick=()=>{editing=true;step=0;render()};
+$("#th").onclick=async()=>{data.theme=data.theme==="l"?"d":"l";await save();render()};
+$("#ex").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));a.download="mes-donnees.json";a.click()};
+$("#so").onclick=()=>signOut(auth);
+$("#de").onclick=async()=>{if(confirm("Effacer ton profil et ta progression ? C’est définitif.")){data={p:null,done:{},tests:[],logs:{},checks:{},theme:data.theme};await save();tab="a";step=0;render()}}}
+
+function render(){const n=$("#nv");document.documentElement.dataset.t=data.theme||"d";$("#av").textContent=user?(user.email||"?")[0].toUpperCase():"";
+if(!user){n.hidden=true;return viewAuth()}
+if(!data.p||editing){n.hidden=true;return viewForm()}
+n.hidden=false;n.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));({a:viewHome,p:viewProg,s:viewTrack,c:viewMe})[tab]()}
+$("#nv").onclick=e=>{const b=e.target.closest("button");if(b){tab=b.dataset.t;render();scrollTo(0,0)}};
+onAuthStateChanged(auth,async u=>{user=u;editing=false;wk=0;data={p:null,done:{},tests:[],logs:{},checks:{}};
 if(u){try{const s=await getDoc(doc(db,"clients",u.uid));if(s.exists())data={...data,...s.data()}}catch(e){A.innerHTML='<div class="warn">Impossible de charger ton profil. Vérifie ta connexion puis recharge la page.</div>';return}}
 render()});
 </script>
