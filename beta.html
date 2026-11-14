@@ -463,6 +463,37 @@ dialog .lk.bk2{margin:-6px 0 4px;color:var(--mu)}dialog .lk.dgk{color:var(--er);
 .ringw.hot .rf{stroke:var(--mf)}
 @media(prefers-reduced-motion:reduce){#app.enter>*,.st2.pop,.ti.pop,.st2.pop path,.ti.pop path,#app.enter .wr2 .f,#app.enter .dn2 .sg,#app.enter .chs .cln,#app.enter .chs .car,#app.enter .chs circle,.spm svg,.spb i,.ringw .cd.tk{animation:none!important}}
 @media print{.itip,.card.inst,.mlk{display:none!important}}
+/* ---------- Connexion ---------- */
+.ahero{display:flex;flex-direction:column;align-items:center;gap:10px;margin:18px 0 8px;text-align:center}.ahero .spm svg{width:64px;height:64px;animation:none}
+.atg{margin:0;color:var(--mu);font-size:.9rem;letter-spacing:.02em}
+.auth{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}.auth>h2{text-align:center;margin-top:12px}.auth>p.mu{text-align:center;max-width:440px;margin:0 auto}
+.auth #fa{border-radius:18px;padding:22px;box-shadow:0 20px 50px -30px rgba(0,0,0,.6)}.auth #fa input{min-height:50px;font-size:1rem}.auth #sb{width:100%;min-height:52px;font-size:1.02rem;margin-top:4px}
+.aben{list-style:none;padding:0;margin:22px 0 0;display:flex;flex-direction:column;gap:12px}.aben li{display:flex;gap:12px;align-items:flex-start;color:var(--mu);font-size:.9rem}
+.aben .ic{flex:none;width:36px;height:36px;padding:8px;border-radius:10px;background:var(--p);border:1px solid var(--ln);color:var(--ac)}.aben b{display:block;color:var(--ink);font-weight:600}
+body.bare{background:radial-gradient(1200px 500px at 50% -10%,color-mix(in srgb,var(--ac) 12%,transparent),transparent 70%),var(--bg);background-attachment:fixed}
+/* ---------- Questionnaire (présentation uniquement) ---------- */
+#fp section:not([hidden]){animation:rise .4s cubic-bezier(.2,.8,.2,1) both}
+.bare .bar{height:8px;border-radius:8px;background:var(--p2)}.bare .bar i{border-radius:8px;background:linear-gradient(90deg,var(--ac),var(--ok));transition:width .45s cubic-bezier(.3,.8,.2,1)}
+.bare #pl{font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;margin:10px 0 0}
+#fp .ch{gap:10px}#fp .ch span{padding:14px 44px 14px 16px;border-radius:14px;transition:border-color .15s,background .15s,transform .1s;position:relative}
+#fp .ch b{font-weight:600}#fp .ch input:active+span{transform:scale(.99)}
+#fp .ch span::after{content:"";position:absolute;right:14px;top:50%;width:20px;height:20px;margin-top:-10px;border-radius:50%;border:1.5px solid var(--ln);box-sizing:border-box}
+#fp .ch input:checked+span::after{border-color:var(--ac);background:var(--ac)}#fp .ch input:checked+span::before{content:"";position:absolute;right:21px;top:50%;width:5px;height:10px;margin-top:-7px;border:solid var(--on);border-width:0 2.2px 2.2px 0;transform:rotate(45deg);z-index:1}
+#fp .ch.r span{padding:14px 10px;text-align:center}#fp .ch.r span::after{display:none}
+#fp label.c{padding:12px 14px;border:1px solid var(--ln);border-radius:14px;background:var(--p);margin:8px 0;align-items:center;cursor:pointer}
+#fp label.c:has(input:checked){border-color:var(--ac);background:color-mix(in srgb,var(--ac) 9%,var(--p))}#fp label.c input{accent-color:var(--ac);width:18px;height:18px;margin:0}
+#fp .f input,#fp .f select,#fp .f textarea{min-height:48px;border-radius:12px}
+@media(max-width:700px){.bare #fp>.row{position:sticky;bottom:0;z-index:3;margin:0 -20px;padding:14px 20px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,transparent,var(--bg) 35%)}.bare #fp>.row button{flex:1;min-height:52px}}
+/* ---------- Programme prêt ---------- */
+#rdy{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:20px;background:radial-gradient(900px 500px at 50% 0%,color-mix(in srgb,var(--ok) 18%,transparent),transparent 70%),var(--bg);overflow:auto}
+.rdi{max-width:440px;width:100%;text-align:center;display:flex;flex-direction:column;gap:14px;animation:rise .6s cubic-bezier(.2,.8,.2,1) both}.rdi h2{margin:0;font-size:1.9rem;letter-spacing:-.02em}.rdi .ey{margin:0;color:var(--ok);font-weight:600}
+.rck{margin:0 auto 6px;width:96px;height:96px}.rck svg{width:100%;height:100%}.rck circle{fill:color-mix(in srgb,var(--ok) 16%,transparent);stroke:var(--ok);stroke-width:2.5}
+.rck path{fill:none;stroke:var(--ok);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:50;stroke-dashoffset:50;animation:rdraw .6s .35s ease-out forwards}@keyframes rdraw{to{stroke-dashoffset:0}}
+.rdg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.rdg div{background:var(--p);border:1px solid var(--ln);border-radius:14px;padding:12px 6px;display:flex;flex-direction:column}.rdg b{font-size:1.6rem}.rdg span{color:var(--mu);font-size:.8rem;line-height:1.3}
+.rdi .big{min-height:56px;font-size:1.05rem;border-radius:14px}
+@media(prefers-reduced-motion:reduce){.auth,#fp section:not([hidden]),.rdi,.rck path{animation:none!important}.rck path{stroke-dashoffset:0}}
+#fp .ch.r span::before{display:none!important}.ahero .spm svg{border-radius:15px;box-shadow:0 0 0 1px var(--ln),0 18px 40px -16px rgba(0,0,0,.6)}
+#fp .ch input{z-index:2}
 </style>
 </head>
 <body>
@@ -475,9 +506,9 @@ dialog .lk.bk2{margin:-6px 0 4px;color:var(--mu)}dialog .lk.dgk{color:var(--er);
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
 import{getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
-import{getFirestore,doc,getDoc,setDoc}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
+import{getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,terminate,clearIndexedDbPersistence,doc,getDoc,setDoc}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
 const fb=initializeApp({apiKey:"AIzaSyCpeBNqDropla1CKUzJWgS7kyB5qwH5BvA",authDomain:"gauthier-coaching.firebaseapp.com",projectId:"gauthier-coaching",storageBucket:"gauthier-coaching.firebasestorage.app",messagingSenderId:"383165911782",appId:"1:383165911782:web:2bba35f1ff9f1a1882a127"});
-const auth=getAuth(fb),db=getFirestore(fb);
+const auth=getAuth(fb);let db;try{db=initializeFirestore(fb,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){db=getFirestore(fb)}
 try{document.documentElement.dataset.t=matchMedia("(prefers-color-scheme: light)").matches?"l":"d"}catch(e){}
 const $=s=>document.querySelector(s),A=$("#app"),R=Math.round;
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -487,7 +518,7 @@ const r5=x=>Math.max(10,R(x/5)*5);
 let user=null,data={p:null,done:{},tests:[],logs:{},checks:{},body:[],lifts:{}},wk=0,editing=false;
 function flash(t,low){if(low&&document.body.classList.contains("running"))return;if(low&&Date.now()-(flash.at||0)<2200)return;if(!low)flash.at=Date.now();const f=$("#fl");f.textContent=t;f.style.display="block";clearTimeout(flash.t);flash.t=setTimeout(()=>f.style.display="none",2500)}
 let pend=0;
-function save(){if(!user)return Promise.resolve();pend++;const t=setTimeout(()=>{if(pend)flash("Réseau faible : envoi dès que possible, garde l’appli ouverte")},3000);
+function save(){if(!user)return Promise.resolve();pend++;const t=setTimeout(()=>{if(pend)flash("Pas de réseau : c’est gardé sur ton téléphone et envoyé dès que la connexion revient")},3000);
 let snap;try{snap=JSON.parse(JSON.stringify(data))}catch(e){snap=data}
 setDoc(doc(db,"clients",user.uid),snap).then(()=>{pend--;clearTimeout(t);if(!pend)flash("Enregistré",1)}).catch(e=>{pend--;clearTimeout(t);flash("Échec de l’enregistrement ("+(e.code||"réseau")+"). Réessaie.")});
 return Promise.resolve()}
@@ -1143,12 +1174,12 @@ const fk=x=>String(R(x*100)/100).replace(".",",");
 /* ---------- Vues ---------- */
 const SANTE=["Douleur ou gêne dans la poitrine à l’effort","Vertiges ou malaises à l’effort","Problème cardiaque ou tension artérielle élevée connue","Douleur articulaire ou blessure récente (genou, dos, épaule, cheville)","Asthme ou problème respiratoire non contrôlé","Grossesse ou accouchement récent","Traitement médical qui limite l’effort"];
 function viewAuth(){const mode=viewAuth.m||"in",up=mode==="up";
-A.innerHTML=`<h2>${up?"Créer mon compte":"Connexion"}</h2><p class="mu">${up?"Un seul compte : ton profil, ton programme et ta progression te suivent sur tous tes appareils.":"Retrouve ton programme et ta progression sur n’importe quel appareil."}</p>
+A.innerHTML=`<div class="ahero"><div class="spm"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#161917"/><path d="M18 25v14M12.5 28.5v7M46 25v14M51.5 28.5v7M18 32h28" stroke="#e4e9df" stroke-width="3.6" stroke-linecap="round" fill="none"/></svg></div><p class="atg">Préparation physique &amp; suivi personnel</p></div><div class="auth"><h2>${up?"Créer mon compte":"Connexion"}</h2><p class="mu">${up?"Un seul compte : ton profil, ton programme et ta progression te suivent sur tous tes appareils.":"Retrouve ton programme et ta progression sur n’importe quel appareil."}</p>
 <div class="seg" role="tablist" aria-label="Connexion ou inscription"><button type="button" role="tab" data-m="in" aria-selected="${!up}" class="${up?"":"on"}">Se connecter</button><button type="button" role="tab" data-m="up" aria-selected="${up}" class="${up?"on":""}">Créer un compte</button></div>
 <form class="card" id="fa"><label class="f">Adresse e-mail<input type="email" name="e" required autocomplete="email" inputmode="email" value="${esc(viewAuth.e||"")}"></label>
 <label class="f">Mot de passe${up?"<small>6 caractères minimum</small>":""}<span class="pw"><input type="password" name="m" required minlength="6" autocomplete="${up?"new-password":"current-password"}"><button type="button" class="o" id="pv" aria-label="Afficher le mot de passe">Afficher</button></span></label>
 <p id="er" class="mu" role="alert" style="color:var(--er)"></p><button type="submit" id="sb">${up?"Créer mon compte":"Se connecter"}</button>
-${up?"":'<p style="margin:16px 0 0"><a href="#" id="rs">Mot de passe oublié ?</a></p>'}</form>`;
+${up?"":'<p style="margin:16px 0 0"><a href="#" id="rs">Mot de passe oublié ?</a></p>'}</form><ul class="aben"><li>${IC('<path d="M6 8v8M3 10v4M18 8v8M21 10v4M6 12h12"/>')}<span><b>Un programme fait pour toi</b>selon ton corps, ton niveau et ton objectif</span></li><li>${IC('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>')}<span><b>Séance guidée</b>chrono, repos et charges notées en direct</span></li><li>${IC('<path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/>')}<span><b>Ta progression</b>records, courbes, nutrition et trophées</span></li></ul></div>`;
 const f=$("#fa"),sb=$("#sb"),fail=e=>{$("#er").textContent=ERR[e.code]||"Une erreur est survenue. Vérifie ta connexion et réessaie.";sb.disabled=false;sb.textContent=up?"Créer mon compte":"Se connecter"};
 A.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{viewAuth.m=b.dataset.m;viewAuth.e=f.e.value;viewAuth()});
 $("#pv").onclick=()=>{const v=f.m.type==="password";f.m.type=v?"text":"password";$("#pv").textContent=v?"Masquer":"Afficher";$("#pv").setAttribute("aria-label",v?"Masquer le mot de passe":"Afficher le mot de passe")};
@@ -1251,7 +1282,7 @@ q.nw=data.p&&data.p.dtest===q.dtest?(data.p.nw||0):nwOf(q.dtest,today());
 const SK=["objectif","seances","mat","prog","niveau","sexe","run30","duree","nw"],o0=data.p||{},DF={duree:75,nw:0,jours:DEFJ[o0.seances],eq:o0.mat==="salle"?[]:o0.mat==="corps"?["banc"]:["hal","elas","banc"],focus:[],bz:[]},chg=!!data.p&&(SK.some(k=>String(o0[k]??DF[k]??"")!==String(q[k]??""))||["focus","jours","eq","bz"].some(k=>String(o0[k]||DF[k])!==String(q[k]||[])));
 if(chg&&Object.values(data.done).some(Boolean)&&!confirm("Ces changements modifient la structure de ton programme : les séances cochées repartent à zéro. Ton historique, tes tests et tes charges notées sont conservés. Continuer ?"))return;
 const nb=$("#nx");if(nb.disabled)return;nb.disabled=true;const was=!!data.p;
-if(chg){data.done={};wk=0;if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>r.c==="*")}data.p=q;if(!data.start)data.start=today();editing=false;step=0;tab="a";await save();render();scrollTo(0,0);flash(was?(chg?"Programme recalculé":"Profil mis à jour"):"Ton programme est prêt")}}
+if(chg){data.done={};wk=0;if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>r.c==="*")}data.p=q;if(!data.start)data.start=today();editing=false;step=0;tab="a";await save();render();scrollTo(0,0);if(was)flash(chg?"Programme recalculé":"Profil mis à jour");else readyScreen()}}
 
 const bc=t=>`<div class="bc"><span>Mon espace / ${t}</span><span class="dt">Enregistré en ligne</span></div>`;
 const IC=d=>`<svg viewBox="0 0 24 24" class="ic">${d}</svg>`;
@@ -1628,6 +1659,13 @@ const c=pts[k],tp=ct.querySelector(".ctt")||ct.appendChild(Object.assign(documen
 const cr=ct.getBoundingClientRect(),px=r.left-cr.left+(+c.getAttribute("cx"))/vb.width*r.width,py=r.top-cr.top+(+c.getAttribute("cy"))/vb.height*r.height;
 tp.style.left=Math.max(8,Math.min(cr.width-8,px))+"px";tp.style.top=py+"px";tp.classList.add("on");pts.forEach((p,i)=>p.classList.toggle("hl",i===k));clearTimeout(chTip.t);chTip.t=setTimeout(()=>{tp.classList.remove("on");pts.forEach(p=>p.classList.remove("hl"))},2600)}
 addEventListener("pointermove",e=>{if(e.pointerType==="mouse")chTip(e)},{passive:true});addEventListener("click",chTip);
+/* Écran « Ton programme est prêt » après le questionnaire (nouveau compte) */
+function readyScreen(){let P;try{P=ctx().P}catch(e){flash("Ton programme est prêt");return}const p=data.p,n=P.reduce((a,w)=>a+w.s.length,0);
+const el=document.createElement("div");el.id="rdy";el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Ton programme est prêt");
+el.innerHTML=`<div class="rdi"><div class="rck"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28"/><path d="M20 33l8 8 16-17"/></svg></div><p class="ey">${esc(p.prenom||"")}${p.prenom?", t":"T"}on programme est prêt</p><h2>${esc(P.meta.nm)}</h2>
+<div class="rdg"><div><b>${P.length}</b><span>semaines</span></div><div><b>${p.seances}</b><span>séances par semaine</span></div><div><b>${n}</b><span>séances au total</span></div></div>
+<p class="mu">Chaque séance est réglée sur ton niveau, ton matériel et ton objectif. Les charges s’ajustent ensuite avec ce que tu notes.</p><button class="big" id="rdb">Découvrir mon programme</button></div>`;
+document.body.appendChild(el);document.body.classList.add("running");const go=()=>{el.remove();document.body.classList.remove("running");render()};$("#rdb").onclick=go;try{$("#rdb").focus({preventScroll:true})}catch(e){}if(!RM())setTimeout(()=>confetti(90),450)}
 function openLog(k){const{P}=ctx(),[w,j]=k.split("-"),s=P[w].s[j],o=data.logs[k]||{};
 const op=(a,v)=>'<option value="">Choisir…</option>'+a.map(([x,t])=>`<option value="${x}"${o[v]===x?" selected":""}>${t}</option>`).join("");
 modal(`<h3>${esc(s.nm)}</h3><form id="fg"><label class="f">Difficulté ressentie<select name="rpe" required>${op([["2","2 – Très facile"],["4","4 – Facile"],["6","6 – Modérée"],["7","7 – Soutenue, contrôlée"],["8","8 – Difficile"],["9","9 – Très difficile"],["10","10 – Maximale"]],"rpe")}</select></label>
@@ -1787,7 +1825,7 @@ $("#pe").onclick=()=>{editing=true;step=0;render();scrollTo(0,0)};
 A.querySelectorAll("[data-th]").forEach(b=>b.onclick=async()=>{data.theme=b.dataset.th;render();await save()});
 $("#nc").onclick=newCycle;modCardBind();instBind();
 $("#ex").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));a.download="mes-donnees-coaching.json";a.click()};
-$("#so").onclick=()=>{if(confirm("Te déconnecter de cet appareil ?"))signOut(auth)};
+$("#so").onclick=()=>{if(pend&&!confirm("Des données ne sont pas encore envoyées (pas de réseau). Si tu te déconnectes maintenant, elles seront perdues. Continuer ?"))return;if(!confirm("Te déconnecter de cet appareil ?"))return;signOut(auth).then(async()=>{try{await terminate(db);await clearIndexedDbPersistence(db)}catch(e){}location.reload()})};
 $("#de").onclick=async()=>{if(confirm("Effacer ton profil, ton programme et toute ta progression ? C’est définitif.")){data={p:null,done:{},tests:[],logs:{},checks:{},body:[],lifts:{},theme:data.theme};await save();tab="a";step=0;render()}}}
 
 const EQV=[["2 œufs entiers",13,150],["Blanc de poulet cuit, 100 g",31,165],["Thon au naturel, 1 boîte égouttée",26,120],["Skyr nature, 200 g",22,120],["Yaourt grec 0 %, 170 g",17,100],["Fromage blanc 0 %, 200 g",15,90],["Saumon cuit, 120 g",26,250],["Bœuf haché 5 % cuit, 125 g",30,230],["Tofu ferme, 150 g",18,150],["Lentilles cuites, 200 g",18,230],["Pois chiches cuits, 150 g",13,245],["Whey, 30 g",24,120],["Flocons d’avoine, 60 g",8,230],["Lait demi-écrémé, 250 ml",8,115],["Pain complet, 2 tranches",7,170],["Amandes, 30 g",6,175]];
