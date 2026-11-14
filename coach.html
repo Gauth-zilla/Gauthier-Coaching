@@ -43,6 +43,7 @@ details.s{border-top:1px solid var(--ln);padding:10px 0}details.s summary{cursor
 .back{background:none;border:0;color:var(--mu);padding:0;min-height:0;margin-bottom:8px}
 #er{color:var(--er)}
 @media(max-width:700px){#hu .em{display:none}header h1 small{display:none}.sum{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}h2{font-size:1.6rem}}
+.tg2{font-size:.75rem;font-weight:600;color:var(--ac);background:color-mix(in srgb,var(--ac) 12%,transparent);padding:1px 7px;border-radius:8px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -707,12 +708,41 @@ const PROG=[["Pompes",["Pompes murales","Pompes mains sur une table","Pompes sur
 ["Gainage",["Planche sur les genoux","Planche","Planche pieds surélevés","Roue abdominale à genoux","Roue abdominale debout"]]];
 const fk=x=>String(R(x*100)/100).replace(".",",");
 
+/* ---------- Séances personnalisées : remplacer, retirer, ajouter un exercice ----------
+Le programme reste calculé par le moteur. Les changements du client sont des règles posées par-dessus :
+{c:"w-j" (cette séance) | "*-j" (cette séance chaque semaine) | "*" (partout), t:"sw"|"rm"|"add", a:ancien, b:nouveau, s:séries} */
+const EXL=/^(.+?) : (\d+) × (.+?)(?: · .*)?$/;
+const exNm=l=>{const m=String(l).match(/^(.+?) : \d+ × /);return m&&LBN[m[1]]?m[1]:null};
+const modOK=l=>!!exNm(l)&&!/\(séries 5\/3\/1\)/.test(l);
+const liOf=p=>{const bz=p.bz||[];return p.age>=60||p.poids/((p.taille/100)**2)>=30||(p.sante||[]).some(i=>i===5)||((p.sante||[]).includes(3)&&(!bz.length||bz.includes("genou")||bz.includes("cheville")))};
+function repsFor(x,w,p){const g=x.g,c=x.c>0;let r=p.sexe==="f"?schW(w,c,g)[1]:sch("n",w,c)[1];
+if(g==="abd"&&!TIME.test(x.n))r=w>=4?"12 à 15":"15 à 20";if(g==="mol")r="12 à 15";if(x.c===2&&x.ra===0)r=w>=4?"5 à 8":"4 à 6";return r}
+function mkLine(nm,s,r,w,p,H){const x=LBN[nm];return exLine(x,x.g,s,r,{p,w,L:+p.niveau,H})}
+/* Échauffement : les séries d’approche suivent le premier exercice chargé */
+function wupFix(it,p){const i=it.findIndex(l=>/^Échauffement/.test(l)&&/puis (séries d’approche sur « |2 séries d’approche légères du premier)/.test(l));if(i<0)return;
+const m0=it.map(l=>l.match(/^(.+?) : .* · environ ([\d,]+) kg( par haltère)?/)).find(Boolean),k0=m0&&parseFloat(m0[2].replace(",",".")),
+bw0=m0&&/barre/i.test(m0[1])&&!/poulie|haltère/i.test(m0[1])?(/EZ/i.test(m0[1])?10:p.sexe==="f"?15:20):0,wk0=v=>bw0&&v<=bw0?"barre seule":kf(v)+" kg",
+wup=m0?`puis séries d’approche sur « ${m0[1]} » : ${wk0(r25(k0*.5))} × 8, puis ${wk0(r25(k0*.75))} × 4${m0[3]||""}`:"puis 2 séries d’approche légères du premier exercice (50 % puis 75 % de la charge)";
+it[i]=it[i].replace(/puis (séries d’approche sur « .*|2 séries d’approche légères du premier exercice \(50 % puis 75 % de la charge\))$/,wup)}
+function applyMods(P,p,H,M){if(M===undefined)M=data.mods;if(!Array.isArray(M)||!M.length)return P;
+P.forEach((W,wi)=>{const ow=W.ow??wi;W.s=W.s.map((s,j)=>{const k=wi+"-"+j,rs=M.filter(r=>r.c==="*"||r.c==="*-"+j||r.c===k);if(!rs.length||!s.it.some(modOK))return s;
+const it=s.it.slice(),tg=it.map(()=>""),ss=/Format (superset|circuit)/.test(it.join(" "));let ds=0,ch=0;const has=n=>it.some(l=>exNm(l)===n);
+rs.forEach(r=>{if(r.t==="sw"){const i=it.findIndex(l=>modOK(l)&&exNm(l)===r.a);if(i<0||!LBN[r.b]||has(r.b))return;
+const m=it[i].match(EXL),o=LBN[r.a],x=LBN[r.b];let rr=m[3].replace(/ par côté$/,"");if(TIME.test(o.n)!==TIME.test(x.n)||(o.c===2&&o.ra===0)!==(x.c===2&&x.ra===0))rr=repsFor(x,ow,p);
+it[i]=mkLine(r.b,+m[2],rr,ow,p,H);tg[i]=tg[i]==="add"?"add":"sw";ch=1}
+else if(r.t==="rm"){const i=it.findIndex(l=>modOK(l)&&exNm(l)===r.a);if(i<0)return;ds-=+it[i].match(EXL)[2];it.splice(i,1);tg.splice(i,1);ch=1}
+else if(r.t==="add"){if(!LBN[r.b]||has(r.b))return;let i=-1;it.forEach((l,n)=>{if(exNm(l))i=n});if(i<0)return;const n=Math.max(1,Math.min(5,+r.s||3)),x=LBN[r.b];
+it.splice(i+1,0,mkLine(r.b,TIME.test(x.n)?Math.min(n,3):n,repsFor(x,ow,p),ow,p,H));tg.splice(i+1,0,"add");ds+=n;ch=1}});
+if(!ch)return s;wupFix(it,p);return{...s,it,tg,mod:1,d:Math.max(10,r5(parseInt(s.d)+ds*(ss?1.75:2.4)))+" min"}})});return P}
+const modTx=r=>r.t==="sw"?`${r.a} → ${r.b}`:r.t==="rm"?`${r.a} retiré`:`${r.b} ajouté (${r.s} séries)`;
+const modSc=r=>r.c==="*"?"partout":/^\*-/.test(r.c)?"chaque semaine, séance "+(+r.c.slice(2)+1):"une seule séance";
+
 /* ---------- Espace coach : lecture seule ---------- */
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const dJours=d=>d?Math.round((new Date(today()+"T12:00:00")-new Date(d+"T12:00:00"))/864e5):null;
 const dFr2=d=>d?String(d).slice(8,10)+"/"+String(d).slice(5,7)+"/"+String(d).slice(2,4):"—";
 let CL=[],sel=null,wkC=0,q="",flt="all";
-function info(c){const p=c.p;if(!p)return{c,ok:false};let P=null,m=null;try{P=gen(p,c.tests||[],c.lifts||{});m=calc(p,(c.body||[]).slice(-1)[0])}catch(e){}
+function info(c){const p=c.p;if(!p)return{c,ok:false};let P=null,m=null;try{P=applyMods(gen(p,c.tests||[],c.lifts||{}),p,c.lifts||{},c.mods||[]);m=calc(p,(c.body||[]).slice(-1)[0])}catch(e){}
 const logs=Object.entries(c.logs||{}).map(([k,l])=>({k,...l})).concat((c.arch||[]).map((l,i)=>({k:"a"+i,...l}))).filter(l=>l&&l.d).sort((a,b)=>a.d<b.d?1:-1);
 const tot=P?P.reduce((a,w)=>a+w.s.length,0):0,dn=Object.values(c.done||{}).filter(Boolean).length,last=logs[0]?logs[0].d:null,dl=dJours(last),ds=dJours(c.start);
 let cw=0;if(P){cw=P.length-1;outer:for(let w=0;w<P.length;w++)for(let j=0;j<P[w].s.length;j++)if(!(c.done||{})[w+"-"+j]){cw=w;break outer}}
@@ -754,7 +784,8 @@ ${x.al.length?`<div>${x.al.map(([t,a])=>`<span class="tg ${t}">${esc(a)}</span>`
 <section class="card"><h3>Séances notées</h3>${x.logs.length?`<div class="tbl"><table><tr><th>Date</th><th>Séance</th><th>Effort</th><th>Comme prévu</th><th>Douleur</th><th>Sensations</th><th>Notes</th></tr>${x.logs.slice(0,30).map(l=>`<tr><td>${dFr2(l.d)}</td><td>${esc(l.n)}</td><td>${esc(l.rpe)}/10</td><td>${l.ok==="oui"?"oui":'<span class="wa">non</span>'}</td><td>${l.pain==="oui"?'<b class="er">oui</b>':"non"}</td><td>${l.rec==="fatigue"?"fatigue":l.rec==="bonne"?"bonnes":"trop tôt"}</td><td>${esc(l.notes||"")}</td></tr>`).join("")}</table></div>`:'<p class="mu">Aucune séance terminée pour l’instant.</p>'}</section>
 <section class="card"><h3>Charges notées</h3>${lk.length?`<div class="tbl"><table><tr><th>Exercice</th><th>Dernière série</th><th>Max estimé</th><th>Séries notées</th></tr>${lk.map(k=>{const a=H[k],l=a[a.length-1],b=Math.max(...a.map(e=>e1of(e.kg,e.reps,e.rir)));return`<tr><td>${esc(k)}</td><td>${cm(l.kg)} kg × ${esc(l.reps)} (marge ${esc(l.rir)}) · ${dFr2(l.d)}</td><td>≈ ${cm(b)} kg</td><td>${a.length}</td></tr>`}).join("")}</table></div>`:'<p class="mu">Aucune série notée.</p>'}</section>
 ${(c.tests||[]).length?`<section class="card"><h3>Tests</h3><div class="tbl"><table><tr><th>Date</th>${(TS[p.objectif]||[]).map(([,t])=>`<th>${t}</th>`).join("")}</tr>${c.tests.map(t=>`<tr><td>${esc(t.d)}</td>${(TS[p.objectif]||[]).map(([k])=>`<td>${esc(t[k]||"")}</td>`).join("")}</tr>`).join("")}</table></div></section>`:""}
-${W?`<section class="card"><h3>Son programme, tel qu’il le voit</h3><div class="wk">${P.map((w,i)=>`<button data-w="${i}" class="${i===wkC?"on":""}">${w.s.every((_,j)=>(c.done||{})[i+"-"+j])?"✓ ":""}Semaine ${i+1}</button>`).join("")}</div><p style="margin:4px 0"><b>${esc(W.t)}</b></p><p class="mu" style="margin:0 0 6px">${esc(W.f)}</p>${W.s.map((s,j)=>{const d=(c.done||{})[wkC+"-"+j];return`<details class="s"><summary>${s.day!=null?DJ[s.day]+" · ":""}${esc(s.nm)} <span class="mu">${s.d}</span> ${d?'<span class="ok">✓ faite</span>':""}</summary><ul>${s.it.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></details>`}).join("")}</section>`:""}`;
+${W?`<section class="card"><h3>Son programme, tel qu’il le voit</h3><div class="wk">${P.map((w,i)=>`<button data-w="${i}" class="${i===wkC?"on":""}">${w.s.every((_,j)=>(c.done||{})[i+"-"+j])?"✓ ":""}Semaine ${i+1}</button>`).join("")}</div><p style="margin:4px 0"><b>${esc(W.t)}</b></p><p class="mu" style="margin:0 0 6px">${esc(W.f)}</p>${W.s.map((s,j)=>{const d=(c.done||{})[wkC+"-"+j];return`<details class="s"><summary>${s.day!=null?DJ[s.day]+" · ":""}${esc(s.nm)} <span class="mu">${s.d}</span> ${d?'<span class="ok">✓ faite</span>':""}</summary><ul>${s.it.map((t,i)=>`<li>${esc(t)}${s.tg&&s.tg[i]?` <span class="tg2">${s.tg[i]==="add"?"ajouté par le client":"remplacé par le client"}</span>`:""}</li>`).join("")}</ul></details>`}).join("")}</section>`:""}
+${(c.mods||[]).length?`<section class="card"><h3>Exercices modifiés par ${esc(p.prenom||"le client")}</h3><ul style="margin:0;padding-left:18px">${c.mods.map(r=>`<li>${esc(modTx(r))} <span class="mu">· ${esc(r.c==="*"||/^\*-/.test(r.c)?modSc(r):"semaine "+(+r.c.split("-")[0]+1)+", séance "+(+r.c.split("-")[1]+1))}${r.d?" · le "+esc(dFr2(r.d)):""}</span></li>`).join("")}</ul></section>`:""}`;
 $("#bk").onclick=()=>{sel=null;viewList();scrollTo(0,0)};A.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{wkC=+b.dataset.w;viewClient()})}
 async function load(){A.innerHTML='<p class="mu">Chargement des dossiers…</p>';try{const s=await getDocs(collection(db,"clients"));CL=s.docs.map(d=>({id:d.id,...d.data()}));sel?viewClient():viewList()}catch(e){if(e&&(e.code==="permission-denied"||/permission/i.test(e.message||"")))viewDenied(auth.currentUser);else A.innerHTML=`<div class="card"><p>Impossible de charger les dossiers. Vérifie ta connexion puis réessaie.</p><button class="o" id="rt">Réessayer</button></div>`,$("#rt").onclick=load}}
 onAuthStateChanged(auth,u=>{if(!u){CL=[];sel=null;viewLogin();return}$("#hu").innerHTML=`<span class="em">${esc(u.email||"")} · </span><button class="o" id="so2" style="min-height:0;padding:4px 10px">Déconnexion</button>`;$("#so2").onclick=()=>signOut(auth);load()});
