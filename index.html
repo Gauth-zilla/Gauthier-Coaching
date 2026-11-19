@@ -562,6 +562,7 @@ details.meth{padding-top:12px;padding-bottom:12px}.meth>summary{flex-direction:r
 
 /* Objectif recommandé (70 ans et plus) */
 .ch .rec{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:.72rem;font-weight:700;vertical-align:2px;color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}
+.swst{margin:0 0 14px;font-size:.88rem}
 </style>
 </head>
 <body>
@@ -1293,7 +1294,7 @@ else s2=Bw.s.map((s,k)=>isT(s)?(light||B[Math.max(0,i-1)]).s[k]:s);
 const X={...W,s:W.s.map(s=>({...s})).concat(s2.map(s=>({...s,o2:1}))),f:W.f+" Deuxième objectif ("+OBJ[o2].toLowerCase()+") : "+nS+" séance"+(nS>1?"s":"")+" cette semaine."};
 hySched(X,p);return X});out.A=A;return out}
 /* Programme affiché : moteur (un ou deux objectifs), puis six exercices au maximum par séance */
-function genH(p,T,H){return capP(genH0(p,T,H),p)}
+function genH(p,T,H,v){return varP(capP(genH0(p,T,H),p),p,H,v)}
 function genH0(p,T,H){if(!hyOn(p))return gen(p,T,H);
 const[nP,nS]=HYS[p.seances],o2=p.obj2,auto=!p.prog||p.prog==="auto",alt=auto&&HYALT[p.objectif]?HYALT[p.objectif][p.sexe==="f"?"f":"h"].filter(id=>METH[id]&&METH[id].plan[nP]&&progOpts(p.objectif,nP,p.mat,p.sexe).some(x=>x[0]===id)):[];
 let out=hyBuild(p,T,H,p.prog||"auto"),sw=false,c0=hyClash(out);
@@ -1342,6 +1343,21 @@ function capW(W,p){const R=W.s.map(s=>capS(s,p)),L={};R.forEach(([,l])=>Object.e
 Object.entries(L).forEach(([g,n])=>{let go=true;while(n>0&&go){go=false;for(let j=0;j<W.s.length&&n>0;j++){const s=W.s[j],i=s.it.findIndex(l=>lnG(l)===g&&EXL.test(l)&&LBN[l.match(EXL)[1]]&&!/\(séries 5\/3\/1\)/.test(l)&&+l.match(EXL)[2]<MAXSR);if(i<0)continue;
 const it=s.it.slice(),k=+it[i].match(EXL)[2];it[i]=it[i].replace(/^(.+?) : \d+ × /,"$1 : "+(k+1)+" × ");W.s[j]={...s,it,d:r5(parseInt(s.d)+(/Format (superset|circuit)/.test(it.join(" "))?1.75:2.4))+" min"};n--;go=true}}})}
 const capP=(P,p)=>{P.forEach(W=>capW(W,p));return P};
+/* ---------- Variation des exercices d’un cycle à l’autre ----------
+Couche posée sur le programme calculé (gen() n’est pas modifié). À chaque nouveau cycle (data.vr = 1, 2, …), les exercices
+d’isolation (exercices d’appoint) tournent vers un autre exercice d’isolation du même muscle, compatible avec le matériel,
+le niveau et les zones sensibles : mêmes séries, mêmes répétitions. Les exercices polyarticulaires (squat, développés,
+tirages, soulevés…) ne changent jamais : ce sont eux qui mesurent la progression. Le même exercice d’origine devient le même
+remplaçant toutes les semaines du cycle. Changer les exercices d’appoint toutes les 4 à 8 semaines entretient la motivation
+et travaille le muscle sous d’autres angles (Kassiano 2022, Baz-Valle 2019). Premier cycle (vr = 0) : rien ne change. */
+/* Le relevé des pointes (tibia) a un rôle de prévention : il ne tourne pas */
+const TIBR=/^Tibialis/;
+function varP(P,p,H,v){v=+v||0;if(!v||!P)return P;const mp={};
+const alt=x=>{if(mp[x.n]!==undefined)return mp[x.n];const L=[x.n].concat(candOf(x.g,p,[x.n]).filter(c=>c.c===0&&TIME.test(c.n)===TIME.test(x.n)&&!TIBR.test(c.n)).map(c=>c.n)).sort((a,b)=>a.localeCompare(b,"fr"));return mp[x.n]=L[(L.indexOf(x.n)+v)%L.length]};
+P.forEach((W,wi)=>{const ow=W.ow??wi;W.s=W.s.map(s=>{let ch=0;const it=s.it.slice();
+it.forEach((l,i)=>{if(!modOK(l))return;const x=LBN[exNm(l)];if(!x||x.c!==0)return;if(TIBR.test(x.n))return;const n=alt(x);if(n===x.n||it.some(z=>exNm(z)===n))return;
+const m=l.match(EXL);it[i]=mkLine(n,+m[2],m[3].replace(/ par côté$/,"").replace(/ \(d’après tes séries\)$/,""),ow,p,H);ch=1});
+if(!ch)return s;wupFix(it,p);return{...s,it}})});return P}
 
 /* ---------- Vues ---------- */
 const SANTE=["Douleur ou gêne dans la poitrine à l’effort","Vertiges ou malaises à l’effort","Problème cardiaque ou tension artérielle élevée connue","Douleur articulaire ou blessure récente (genou, dos, épaule, cheville)","Asthme ou problème respiratoire non contrôlé","Grossesse ou accouchement récent","Traitement médical qui limite l’effort"];
@@ -1412,7 +1428,7 @@ const G=[
 [/soulevé|pont fessier|mollets/,"Soulevé roumain, pont fessier, mollets","Soulevé : dos plat, genoux légèrement fléchis, bassin vers l’arrière.|Pont : serre les fessiers en haut.|Mollets : monte lentement sur la pointe des pieds.","Dos arrondi sur le soulevé.","Charge légère, amplitude réduite.","Fais l’exercice sur une jambe."]];
 const NIV=["Débutant","Intermédiaire","Avancé"];
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
-const ctx=()=>{const p=data.p,b=(data.body||[]).slice(-1)[0],P=applyMods(genH(p,data.tests,data.lifts),p,data.lifts),m=calc(p,b);return{p,m,P,tot:P.reduce((a,w)=>a+w.s.length,0),dn:Object.values(data.done).filter(Boolean).length}};
+const ctx=()=>{const p=data.p,b=(data.body||[]).slice(-1)[0],P=applyMods(genH(p,data.tests,data.lifts,data.vr),p,data.lifts),m=calc(p,b);return{p,m,P,tot:P.reduce((a,w)=>a+w.s.length,0),dn:Object.values(data.done).filter(Boolean).length}};
 const nextS=P=>{for(let w=0;w<P.length;w++)for(let j=0;j<P[w].s.length;j++)if(!data.done[w+"-"+j])return[w,j];return null};
 let tab="a",step=0;
 const dg=$("#dg");dg.onclick=e=>{if(e.target===dg)dg.close()};
@@ -1475,8 +1491,13 @@ let focusS=null;const OS={};
 function openSess(w,j){tab="p";wk=w;OS[w+"-"+j]=true;focusS=j;render()}
 async function newCycle(){if(!confirm("Lancer un nouveau cycle d’entraînement ? Les séances cochées repartent à zéro. Ton historique, tes tests et tes charges notées sont conservés : les charges du nouveau cycle partent de tes meilleures séries."))return;
 const L=data.lifts||{};Object.keys(L).forEach(k=>{const a=L[k];if(!a.length)return;const wl=Math.max(...a.map(e=>e.w));L[k]=a.map(e=>({...e,w:e.w===wl?-1:Math.min(e.w,-1)-100}))});
-if(RUN)runClose(true);const c=data.cyc||1;data.arch=(data.arch||[]).concat(Object.values(data.logs||{}).map(l=>({...l,c})));data.logs={};data.done={};if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>/^\*/.test(r.c));data.cyc=c+1;data.pid=Date.now().toString(36);data.start=today();wk=0;if(data.p&&data.p.dtest)data.p.nw=nwOf(data.p.dtest,today());
-checkBadges(1);await save();render();scrollTo(0,0);flash("Nouveau cycle lancé")}
+let plan=0,fait=0;try{const{P}=ctx();plan=P.reduce((a,W)=>a+W.s.length,0);fait=P.reduce((a,W,i)=>a+W.s.filter((s,j)=>data.done[i+"-"+j]).length,0)}catch(e){}
+if(RUN)runClose(true);const c=data.cyc||1;data.arch=(data.arch||[]).concat(Object.values(data.logs||{}).map(l=>({...l,c})));data.logs={};data.done={};if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>/^\*/.test(r.c));data.cyc=c+1;data.vr=(data.vr||0)+1;data.pid=Date.now().toString(36);data.start=today();wk=0;if(data.p&&data.p.dtest)data.p.nw=nwOf(data.p.dtest,today());
+checkBadges(1);await save();render();scrollTo(0,0);flash("Nouveau cycle lancé");
+/* Cycle bien mené (70 % des séances au moins) : proposer le niveau au-dessus. Le client garde le choix. */
+const nv=+((data.p||{}).niveau||0);if(nv<2&&plan&&fait/plan>=.7)lvlUp(nv,Math.round(fait/plan*100))}
+function lvlUp(nv,pc){const L=["Débutant","Intermédiaire","Avancé"];modal(`<h3>Bravo, cycle terminé à ${pc} % !</h3><p>Ton corps s’est adapté. Pour continuer à progresser, tu peux passer au niveau <b>${L[nv+1]}</b> : un peu plus de volume et des exercices plus exigeants. Tes charges repartent toujours de tes meilleures séries.</p><p class="mu">Tu pourras changer de niveau quand tu veux dans ton profil.</p><div class="row"><button id="lvy">Passer en ${L[nv+1].toLowerCase()}</button><button class="o" id="lvn">Rester en ${L[nv].toLowerCase()}</button></div>`);
+$("#lvy").onclick=async()=>{data.p={...data.p,niveau:nv+1};data.pid=Date.now().toString(36);dg.close();await save();render();flash("Niveau "+L[nv+1].toLowerCase()+" : ton programme est recalculé")};$("#lvn").onclick=()=>dg.close()}
 function viewHome(){const{p,m,P,tot,dn}=ctx(),nx=nextS(P),cw=nx?nx[0]:P.length-1,ck=data.checks[today()],W=P[cw],cm=f1;
 const s0=new Date((data.start||today())+"T12:00:00"),e0=new Date(s0.getTime()+(P.length*7-1)*864e5),df=d=>d.toLocaleDateString("fr-BE",{day:"numeric",month:"short"});
 const st=(l,ic,v,u,c)=>`<div><div class="h"><span>${l}</span>${IC(ic)}</div><b>${v}<small>${u}</small></b><span class="c">${c}</span></div>`;
@@ -1626,7 +1647,7 @@ const BPR={s1:x=>[x.n,1],s10:x=>[x.n,10],s25:x=>[x.n,25],s50:x=>[x.n,50],s100:x=
 const BUN={s:["séance","séances"],f:["semaine régulière","semaines régulières"],r:["record","records"],t:["test","tests"]};
 function bLeft(b,x){const f=BPR[b[0]];if(!f)return b[2];const[h,g]=f(x),l=Math.max(0,g-h),u=BUN[b[4]]||["",""];return"Encore "+l+" "+(l>1?u[1]:u[0])}
 const bIco=(b,ok)=>`<span class="bi k${b[4]}${ok?" ok":""}">${IC(BI[b[4]])}</span>`;
-function stats(){let P=null;try{P=data.p?genH(data.p,data.tests,data.lifts):null}catch(e){}const d=data.done||{},g=regul(),all=(w,i)=>w.s.length>0&&w.s.every((_,j)=>d[i+"-"+j]),c2=(data.cyc||1)>1;
+function stats(){let P=null;try{P=data.p?genH(data.p,data.tests,data.lifts,data.vr):null}catch(e){}const d=data.done||{},g=regul(),all=(w,i)=>w.s.length>0&&w.s.every((_,j)=>d[i+"-"+j]),c2=(data.cyc||1)>1;
 return{n:allLogs().filter(l=>l.ok==="oui").length,...g,rec:nRec(),t:(data.tests||[]).length,fw:c2||(P?P.some(all):false),cy:c2||(P?P.every(all):false)}}
 const earnedB=x=>BDG.filter(b=>b[3](x)).map(b=>b[0]);
 function initBadges(){if(data.p&&!Array.isArray(data.bseen))data.bseen=earnedB(stats())}
@@ -2145,13 +2166,13 @@ A.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{gf=b.dataset.f;gLim=40;
 function viewMe(){const{p,m,P}=ctx(),cm=f1,th=data.theme==="l"||data.theme==="d"?data.theme:"a";
 A.innerHTML=`${bc("Mon profil")}<h2>Mon profil</h2><div class="card"><div class="ch2 wr"><h3>${esc(p.prenom||"Mon compte")}</h3><button class="o" id="pe">Modifier mon profil</button></div><p class="mu" style="margin:0">${esc(user.email)}</p><p style="margin:10px 0 0">${esc(p.age)} ans · ${esc(p.taille)} cm · ${cm(m.poids)} kg · ${NIV[p.niveau]} · ${esc(p.seances)} séances par semaine · ${OBJ[p.objectif]}</p><p class="mu" style="margin:6px 0 0">Méthode : ${esc(P.meta.nm)} · ${p.mat==="salle"?"en salle":p.mat==="corps"?"sans matériel":"à la maison"}${(data.cyc||1)>1?" · cycle "+esc(data.cyc):""}</p></div>
 <div class="card"><h3>Mon corps</h3><p class="mu" style="margin:0">IMC ${cm(m.imc)} · masse grasse ${m.known?"":"≈ "}${cm(m.mg)} % (${cm(m.fm)} kg) · masse maigre ${cm(m.lbm)} kg · muscle ≈ ${cm(m.smm)} kg · FFMI ${cm(m.nffmi)}</p><p class="mu" style="margin:6px 0 0">Nutrition : ${m.kcal} kcal · ${m.prot} g de protéines · ${m.carb} g de glucides · ${m.fat} g de lipides par jour</p></div>
-${installCard()}<div class="card"><h3>Affichage</h3><div class="chips" role="radiogroup" aria-label="Thème">${[["a","Automatique"],["d","Sombre"],["l","Clair"]].map(([k,t])=>`<button role="radio" aria-checked="${k===th}" data-th="${k}" class="${k===th?"on":""}">${t}</button>`).join("")}</div><p class="mu" style="margin:0">Automatique suit le réglage de ton téléphone ou de ton ordinateur.</p></div>
+${installCard()}<p class="mu swst" id="swst"></p><div class="card"><h3>Affichage</h3><div class="chips" role="radiogroup" aria-label="Thème">${[["a","Automatique"],["d","Sombre"],["l","Clair"]].map(([k,t])=>`<button role="radio" aria-checked="${k===th}" data-th="${k}" class="${k===th?"on":""}">${t}</button>`).join("")}</div><p class="mu" style="margin:0">Automatique suit le réglage de ton téléphone ou de ton ordinateur.</p></div>
 ${modCard()}<div class="card"><h3>Mon cycle</h3><p class="mu" style="margin:0 0 4px">Recommence 8 semaines quand tu veux : tes séances cochées repartent à zéro, ton historique, tes tests et tes charges notées sont conservés.</p><div class="row"><button class="o" id="nc">Lancer un nouveau cycle</button></div></div>
 <div class="card"><h3>Mes données</h3><p class="mu" style="margin:0">Ton profil et ta progression sont enregistrés en ligne dans ton compte : tu les retrouves sur n’importe quel appareil.</p><div class="row"><button class="o" id="ex">Exporter mes données</button><button class="o" id="so">Se déconnecter</button><button class="o dg" id="de">Effacer mon profil</button></div><p class="mu" style="margin:14px 0 0;font-size:.88rem">« Effacer mon profil » remet ton programme à zéro et garde ton compte. Pour tout supprimer définitivement, y compris ton compte :</p><div class="row"><button class="o dg" id="dac">Supprimer mon compte</button></div></div>
 <p class="mu" style="text-align:center;margin-top:24px">Gauthier’s coaching · Version 13 · 19 nov. 2026</p>`;
 $("#pe").onclick=()=>{editing=true;step=0;render();scrollTo(0,0)};
 A.querySelectorAll("[data-th]").forEach(b=>b.onclick=async()=>{data.theme=b.dataset.th;render();await save()});
-$("#nc").onclick=newCycle;modCardBind();instBind();
+$("#nc").onclick=newCycle;modCardBind();instBind();swCheck();
 $("#ex").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));a.download="mes-donnees-coaching.json";a.click()};
 $("#so").onclick=()=>{if(pend&&!confirm("Des données ne sont pas encore envoyées (pas de réseau). Si tu te déconnectes maintenant, elles seront perdues. Continuer ?"))return;if(!confirm("Te déconnecter de cet appareil ?"))return;signOut(auth).then(async()=>{try{await terminate(db);await clearIndexedDbPersistence(db)}catch(e){}location.reload()})};
 $("#dac").onclick=openDelAcc;
@@ -2192,6 +2213,11 @@ ${p.sexe==="f"?`<section class="card"><div class="ch2"><h3>Spécificités pour l
 <section class="card"><div class="ch2"><h3>Comment c’est calculé</h3></div><p class="mu" style="margin:0">Métabolisme de base ${m.bmr} kcal (${m.known?"moyenne de Mifflin-St Jeor et de Katch-McArdle, ce dernier utilise ta masse maigre":"formule de Mifflin-St Jeor"}) × niveau d’activité ${String(m.pal).replace(".",",")} = ${m.tdee} kcal de dépense. Ton objectif ajuste ce chiffre (${m.but==="perdre"?"déficit":m.but==="prendre"?"surplus":"maintien"}), sans descendre sous ton métabolisme de base, ni sous ${p.sexe==="h"?1500:1200} kcal, ni sous 30 kcal par kg de masse maigre une fois l’entraînement retiré. Protéines : ${m.but==="perdre"?"2,5":m.but==="prendre"?"2,2":["hypertrophie","force"].includes(p.objectif)?"2,1":"1,9"} g par kg de masse maigre (Morton 2018, Helms 2014). Lipides : au moins 0,8 g par kg et 25 % des calories. Glucides : le reste.</p><p class="mu">Ce sont des repères : pèse-toi chaque semaine. Si ton poids ne bouge pas comme prévu après 2 à 3 semaines, ajuste de 100 à 150 kcal. Ce n’est pas un avis médical ou diététique. Ton médecin ou un diététicien peut t’aider si tu as une maladie, une grossesse ou un trouble alimentaire.</p></section>
 <details class="sc"><summary>Sources</summary><ol class="src">${SRCS.slice(0,10).concat(SRCS.filter(x=>/EFSA|IOC|Aspetar|Colenso|Thomas DT|Paluch/.test(x))).map(x=>`<li>${esc(x)}</li>`).join("")}</ol></details>`}
 
+/* État de l’ouverture sans réseau (sw.js), affiché dans le profil */
+async function swCheck(){const e=$("#swst");if(!e)return;if(!("serviceWorker" in navigator)||!(location.protocol==="https:"||location.hostname==="localhost")){e.remove();return}
+let ok=false;try{ok=!!navigator.serviceWorker.controller&&(await caches.keys()).some(k=>/^gc-/.test(k))}catch(x){}
+if(!document.body.contains(e))return;e.innerHTML=ok?"Ouverture sans réseau : <b>prête ✓</b>":"Ouverture sans réseau : <b>pas encore prête</b>. Ouvre l’appli une fois avec du réseau, ferme-la complètement, puis rouvre-la."}
+
 function render(){const sh=$("#shell"),em=user?(user.email||"?"):"";document.documentElement.dataset.t=data.theme==="l"||data.theme==="d"?data.theme:(matchMedia("(prefers-color-scheme: light)").matches?"l":"d");const ini=(data.p&&data.p.prenom||em)[0];$("#av").textContent=user&&ini?ini.toUpperCase():"";
 if(!user){sh.classList.add("bare");document.body.classList.add("bare");return viewAuth()}
 if(!data.p||editing){sh.classList.add("bare");document.body.classList.add("bare");return viewForm()}
@@ -2201,7 +2227,7 @@ $("#nv").onclick=e=>{const b=e.target.closest("button");if(b){tab=b.dataset.t;re
 $("#av").onclick=()=>{if(data.p&&!editing){tab="c";render();scrollTo(0,0)}};
 try{matchMedia("(prefers-color-scheme: light)").addEventListener("change",()=>{if(!(data.theme==="l"||data.theme==="d"))render()})}catch(e){}
 onAuthStateChanged(auth,async u=>{liveOff();try{if(RUN){runSave();clearInterval(RUN.iv);RUN=null;miniOff();const el=$("#run");if(el){el.hidden=true;el.innerHTML=""}document.body.classList.remove("running")}}catch(e){}user=u;editing=false;wk=0;data={p:null,done:{},tests:[],logs:{},checks:{},body:[],lifts:{}};
-if(u){try{const s=await getDoc(doc(db,"clients",u.uid));if(s.exists())data={...data,...s.data()};try{const cs=await getDoc(doc(db,"coach",u.uid));CO=cs.exists()?cs.data()||{}:{}}catch(e){CO={}}try{initBadges()}catch(e){}try{if(data.p&&!data.dep)data.dep=depDe(data)}catch(e){}if(data.p){try{const G0=genH(data.p,data.tests,data.lifts),nx=nextS(G0);wk=nx?nx[0]:G0.length-1}catch(e){}}}catch(e){A.innerHTML='<div class="warn">Impossible de charger ton profil. Vérifie ta connexion puis recharge la page.</div>';return}}
+if(u){try{const s=await getDoc(doc(db,"clients",u.uid));if(s.exists())data={...data,...s.data()};try{const cs=await getDoc(doc(db,"coach",u.uid));CO=cs.exists()?cs.data()||{}:{}}catch(e){CO={}}try{initBadges()}catch(e){}try{if(data.p&&!data.dep)data.dep=depDe(data)}catch(e){}if(data.p){try{const G0=genH(data.p,data.tests,data.lifts,data.vr),nx=nextS(G0);wk=nx?nx[0]:G0.length-1}catch(e){}}}catch(e){A.innerHTML='<div class="warn">Impossible de charger ton profil. Vérifie ta connexion puis recharge la page.</div>';return}}
 render();try{runRestore()}catch(e){}if(u&&data.p!==undefined)liveOn(u);else liveOff()});
 /* Fiche et changements du coach suivis en direct : si le client utilise un autre appareil, ou si le coach modifie une séance,
    cet appareil reçoit tout de suite la version à jour. Ainsi un appareil resté ouvert n’enregistre jamais une vieille copie. */
