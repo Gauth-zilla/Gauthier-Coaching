@@ -6,26 +6,28 @@
    Interrupteur de secours : mettre ARRET à true puis mettre ce fichier en ligne. Au prochain lancement, chaque téléphone
    efface la copie gardée et revient au fonctionnement sans ce fichier. */
 const ARRET=false;
-const VERSION="gc-v1";
+const VERSION="gc-v2";
 const FB=/^https:\/\/www\.gstatic\.com\/firebasejs\/13\.3\.0\//;
 const PAGES=["./","./index.html","./beta.html","./manifest.webmanifest","./manifest-beta.webmanifest","./icon-192.png","./icon-512.png","./apple-touch-icon.png"];
 const SDK=["firebase-app.js","firebase-auth.js","firebase-firestore.js"].map(f=>"https://www.gstatic.com/firebasejs/13.3.0/"+f);
 
 self.addEventListener("install",e=>{self.skipWaiting();if(ARRET)return;
-  e.waitUntil(caches.open(VERSION).then(c=>Promise.all(PAGES.concat(SDK).map(u=>c.add(new Request(u,{cache:"reload"})).catch(()=>{})))))});
+  e.waitUntil(caches.open(VERSION).then(c=>Promise.all(PAGES.concat(SDK).map(u=>fetch(new Request(u,{cache:"reload"})).then(async r=>{if(r&&r.ok)await c.put(u,await propre(r))}).catch(()=>{})))))});
 
 self.addEventListener("activate",e=>{e.waitUntil((async()=>{
   const ks=await caches.keys();await Promise.all(ks.filter(k=>ARRET||k!==VERSION).map(k=>caches.delete(k)));
   if(ARRET){await self.registration.unregister();const cs=await self.clients.matchAll({type:"window"});cs.forEach(c=>{try{c.navigate(c.url)}catch(x){}});return}
   await self.clients.claim()})())});
 
+/* Safari (iPhone) refuse d’afficher une page gardée si elle venait d’une redirection : on en garde une copie « propre » */
+async function propre(r){if(!r||!r.redirected)return r;const b=await r.clone().blob();return new Response(b,{status:r.status,statusText:r.statusText,headers:r.headers})}
 /* La page : d’abord le réseau (4 s au plus), sinon la copie gardée */
 async function page(req){const c=await caches.open(VERSION),u=new URL(req.url),key=u.origin+u.pathname;
-  const net=fetch(req).then(r=>{if(r&&r.ok&&r.type==="basic")c.put(key,r.clone());return r});
+  const net=fetch(req).then(async r=>{if(r&&r.ok&&r.type==="basic"){const p=await propre(r);c.put(key,p.clone());return p}return r});
   net.catch(()=>{});const slow=new Promise(res=>setTimeout(res,4000,null));
   try{const r=await Promise.race([net,slow]);if(r)return r}catch(x){}
   const old=await c.match(key)||await c.match(/beta\.html$/.test(u.pathname)?"./beta.html":/coach/.test(u.pathname)?key:"./index.html")||await c.match("./");
-  if(old)return old;return net}
+  if(old)return propre(old);return net}
 
 /* Fichiers Firebase : la copie gardée, sinon le réseau */
 async function sdk(req){const c=await caches.open(VERSION),old=await c.match(req.url);if(old)return old;
