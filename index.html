@@ -781,12 +781,14 @@ const f1=x=>String(R(x*10)/10).replace(".",",");
 function calc(p,b){
 const q={...p};
 if(b){for(const k of["poids","mg","cou","ta","hanc","mm"])if(b[k]>0)q[k]=b[k];if(!(b.mg>0)&&(b.ta>0||b.cou>0)&&q.cou>0&&q.ta>q.cou)q.mg=0}
-const h=q.taille/100,imc=q.poids/h/h,hom=q.sexe==="h";let mg,src,known=true;
+const h=q.taille/100,imc=q.poids/h/h,hom=q.sexe==="h";let mg=null,src,known=true,bad=0;
 if(q.mg>0){mg=q.mg;src="valeur saisie par toi"}
 else if(q.cou>0&&q.ta>q.cou&&(hom||q.hanc>0)){
 mg=hom?495/(1.0324-.19077*Math.log10(q.ta-q.cou)+.15456*Math.log10(q.taille))-450:495/(1.29579-.35004*Math.log10(q.ta+q.hanc-q.cou)+.221*Math.log10(q.taille))-450;
-src="estimée avec tes mensurations (méthode US Navy, précision ± 3 à 4 points)"}
-else{mg=1.2*imc+.23*q.age-10.8*(hom?1:0)-5.4;src="estimation grossière à partir de l’IMC et de l’âge";known=false}
+src="estimée avec tes mensurations (méthode US Navy, précision ± 3 à 4 points)";
+/* Mensurations incohérentes (tour de taille trop proche du tour de cou, faute de frappe) : résultat impossible, on revient à l’estimation par l’IMC */
+if(mg<(hom?5:12)){mg=null;bad=1}}
+if(mg==null){mg=1.2*imc+.23*q.age-10.8*(hom?1:0)-5.4;src=bad?"estimation à partir de l’IMC et de l’âge (tes mensurations donnent un résultat impossible : vérifie ton tour de taille et ton tour de cou)":"estimation grossière à partir de l’IMC et de l’âge";known=false}
 mg=Math.max(3,R(mg*10)/10);
 const fm=R(q.poids*mg)/100,lbm=R((q.poids-fm)*10)/10,fmr=R(fm*10)/10;
 const ffmi=lbm/h/h,nffmi=ffmi+6.1*(1.8-h);
@@ -796,7 +798,7 @@ const pot=hom&&mg<25?Math.max(0,R(((25-6.1*(1.8-h))*h*h-lbm)*10)/10):null;
 const hi=hom?mg>=25:mg>=32,lo=imc<18.5,lean=hom?mg<12:mg<20,cat=imc<18.5?"insuffisance pondérale":imc<25?"corpulence normale":imc<30?"surpoids":"obésité";
 const mif=10*q.poids+6.25*q.taille-5*q.age+(hom?5:-161),kat=370+21.6*lbm,bmr=known?(mif+kat)/2:mif;
 const pal=[1.2,1.3,1.4][q.act==null?1:q.act]+.045*q.seances+(q.objectif==="endurance"?.05:0),tdee=bmr*pal;
-const al=[];const ob=q.objectif,muscu=ob==="hypertrophie"||ob==="force";
+const al=[];if(bad)al.push("Tes mensurations donnent une masse grasse impossible : vérifie ton tour de taille (au nombril) et ton tour de cou dans Mon corps. En attendant, l’appli utilise une estimation à partir de ton IMC.");const ob=q.objectif,muscu=ob==="hypertrophie"||ob==="force";
 let but=q.but&&q.but!=="auto"?q.but:lo?"prendre":hi?"perdre":muscu?"prendre":ob==="perte"?"perdre":"maintenir",f=1,cap="",recomp=false;
 const minor=q.age<18,preg=(q.sante||[]).includes(5),old=q.age>=65;
 if(old&&but==="perdre"&&(!q.but||q.but==="auto")&&imc<30){but="maintenir";cap="Après 65 ans, avec un IMC sous 30, on vise à garder ton poids et surtout ton muscle plutôt qu’à maigrir."}
@@ -1584,27 +1586,93 @@ bw0=m0&&/barre/i.test(m0[1])&&!/poulie|haltère/i.test(m0[1])?(/EZ/i.test(m0[1])
 wup=m0?`puis séries d’approche sur « ${m0[1]} » : ${wk0(r25(k0*.5))} × 8, puis ${wk0(r25(k0*.75))} × 4${m0[3]||""}`:"puis 2 séries d’approche légères du premier exercice (50 % puis 75 % de la charge)";
 it[i]=it[i].replace(/puis (séries d’approche sur « .*|2 séries d’approche légères du premier exercice \(50 % puis 75 % de la charge\))$/,wup)}
 function applyMods(P,p,H,M,C){if(M===undefined)M=data.mods;if(C===undefined)C=typeof CO!=="undefined"&&CO&&Array.isArray(CO.mods)?CO.mods:[];M=Array.isArray(M)?M:[];C=Array.isArray(C)?C:[];if(!M.length&&!C.length)return P;
-P.forEach((W,wi)=>{const ow=W.ow??wi;W.s=W.s.map((s,j)=>{const k=wi+"-"+j,sc=r=>r&&(r.c==="*"||r.c==="*-"+j||r.c===k),rs=M.filter(sc).map(r=>[r,0]).concat(C.filter(sc).map(r=>[r,1]));if(!rs.length||!s.it.some(modOK))return s;
+P.forEach((W,wi)=>{const ow=W.ow??wi;W.s=W.s.map((s,j)=>{const k=wi+"-"+j,sc=r=>r&&(r.c==="*"||r.c==="*-"+j||r.c===k),all=M.filter(sc).map(r=>[r,0]).concat(C.filter(sc).map(r=>[r,1])),hm=all.some(([r])=>r.t==="home"&&r.c===k),s1=modS(s,all.filter(([r])=>r.t!=="home"),ow,p,H);return hm?homeS(s1,p,ow):s1})});return P}
+/* Lignes d’exercice que le coach peut remplacer, retirer ou déplacer : les exercices du Guide, mais aussi les lignes
+« libres » (renforcement pour le test, pompes pyramidales, course…). Échauffement, retour au calme et consignes restent fixes.
+La clé d’une ligne : le nom de l’exercice, ou le texte avant « : », ou le début de la ligne avant le premier chiffre. */
+const FIXL=/^(Échauffement|Retour au calme|Repos|Intensité|Technique de la semaine|Progression|Choisis la|Format |Si tu atteins|Training Max|À la maison|Note tes|Bois |Option)/;
+const lnKey=l=>{l=String(l);const e=exNm(l);if(e)return e;if(FIXL.test(l))return null;const m=/^(.+?) : /.exec(l);if(m)return m[1];const k=l.replace(/\s*[\d(].*$/,"").trim();return k.length>=3?k:l};
+const lnFree=l=>!!lnKey(l)&&!/\(séries 5\/3\/1\)/.test(l);
+/* Règles du client et du coach sur une séance (remplacer, retirer, ajouter, ordre) */
+function modS(s,rs,ow,p,H){if(!rs.length||!s.it.some(l=>modOK(l)||lnKey(l)))return s;
 const it=s.it.slice(),tg=it.map(()=>""),ss=/Format (superset|circuit)/.test(it.join(" "));let ds=0,ch=0;const has=n=>it.some(l=>exNm(l)===n);
 /* Les changements du client d’abord, ceux du coach ensuite : le coach a toujours le dernier mot.
-   Une règle du coach vise l’exercice affiché (a) ou, si le client est revenu en arrière, l’exercice d’origine (o). */
-const at=r=>{let i=it.findIndex(l=>modOK(l)&&exNm(l)===r.a);if(i<0&&r.o)i=it.findIndex(l=>modOK(l)&&exNm(l)===r.o);return i};
+   Une règle du coach vise l’exercice affiché (a) ou, si le client est revenu en arrière, l’exercice d’origine (o).
+   Le coach peut aussi viser une ligne libre par sa clé. */
+const at=r=>{let i=it.findIndex(l=>modOK(l)&&exNm(l)===r.a);if(i<0&&r.o)i=it.findIndex(l=>modOK(l)&&exNm(l)===r.o);if(i<0)i=it.findIndex(l=>lnFree(l)&&lnKey(l)===r.a);return i};
 rs.forEach(([r,co])=>{
 if(r.t==="sw"){const i=co?at(r):it.findIndex(l=>modOK(l)&&exNm(l)===r.a);if(i<0||!LBN[r.b]||has(r.b))return;
-const m=it[i].match(EXL),o=LBN[exNm(it[i])],x=LBN[r.b];let rr=m[3].replace(/ par côté$/,"");if(TIME.test(o.n)!==TIME.test(x.n)||(o.c===2&&o.ra===0)!==(x.c===2&&x.ra===0))rr=repsFor(x,ow,p);
-it[i]=mkLine(r.b,+m[2],rr,ow,p,H);tg[i]=co?"csw":(tg[i]==="add"?"add":"sw");ch=1}
-else if(r.t==="rm"){const i=co?at(r):it.findIndex(l=>modOK(l)&&exNm(l)===r.a);if(i<0)return;ds-=+it[i].match(EXL)[2];it.splice(i,1);tg.splice(i,1);ch=1}
-else if(r.t==="add"){if(!LBN[r.b]||has(r.b))return;let i=-1;it.forEach((l,n)=>{if(exNm(l))i=n});if(i<0)return;const n=Math.max(1,Math.min(5,+r.s||3)),x=LBN[r.b];
+const m=it[i].match(EXL),o=LBN[exNm(it[i])],x=LBN[r.b];let rr,ns;
+if(m&&o){ns=+m[2];rr=m[3].replace(/ par côté$/,"");if(TIME.test(o.n)!==TIME.test(x.n)||(o.c===2&&o.ra===0)!==(x.c===2&&x.ra===0))rr=repsFor(x,ow,p)}
+else{const k=String(it[i]).match(/(\d+) × /);ns=k?Math.max(1,Math.min(5,+k[1])):3;rr=repsFor(x,ow,p)}
+it[i]=mkLine(r.b,TIME.test(x.n)?Math.min(ns,3):ns,rr,ow,p,H);tg[i]=co?"csw":(tg[i]==="add"?"add":"sw");ch=1}
+else if(r.t==="rm"){const i=co?at(r):it.findIndex(l=>modOK(l)&&exNm(l)===r.a);if(i<0)return;const m=it[i].match(EXL);if(m&&exNm(it[i]))ds-=+m[2];it.splice(i,1);tg.splice(i,1);ch=1}
+else if(r.t==="add"){if(!LBN[r.b]||has(r.b))return;let i=-1;it.forEach((l,n)=>{if(exNm(l))i=n});if(i<0&&co)it.forEach((l,n)=>{if(lnKey(l))i=n});if(i<0)return;const n=Math.max(1,Math.min(5,+r.s||3)),x=LBN[r.b];
 it.splice(i+1,0,mkLine(r.b,TIME.test(x.n)?Math.min(n,3):n,repsFor(x,ow,p),ow,p,H));tg.splice(i+1,0,co?"cadd":"add");ds+=n;ch=1}});
-if(!ch)return s;wupFix(it,p);return{...s,it,tg,mod:1,d:Math.max(10,r5(parseInt(s.d)+ds*(ss?1.75:2.4)))+" min"}})});return P}
+/* Ordre choisi par le coach : seules les lignes d’exercice changent de place, le reste ne bouge pas */
+const od=rs.filter(([r,co])=>co&&r.t==="ord"&&Array.isArray(r.l)).pop();
+if(od){const L=od[0].l,sl=it.map((l,n)=>lnKey(l)?n:-1).filter(n=>n>=0),rk=n=>{const k=L.indexOf(lnKey(it[n]));return k<0?sl.indexOf(n)+.5:k},nw=sl.slice().sort((a,b)=>rk(a)-rk(b)||a-b);
+if(nw.some((n,k)=>n!==sl[k])){const I=nw.map(n=>it[n]),G=nw.map(n=>tg[n]);sl.forEach((n,k)=>{it[n]=I[k];tg[n]=G[k]});ch=1}}
+if(!ch)return s;wupFix(it,p);return{...s,it,tg,mod:1,d:Math.max(10,r5(parseInt(s.d)+ds*(ss?1.75:2.4)))+" min"}}
 /* Exercices de remplacement possibles : même muscle, matériel et zones sensibles de la personne */
 function candOf(g,p,skip){const bar=p.mat!=="salle"&&Array.isArray(p.eq)&&p.eq.includes("barre"),f=p.sexe==="f",li=liOf(p);let a=pool(g,p.mat,+p.niveau,f,bar).all;if(!a.length&&p.mat!=="corps")a=pool(g,"corps",+p.niveau,f,bar).all;
 return a.filter(x=>exOK(x,p)&&!skip.includes(x.n)&&!(li&&JUMP.test(x.n)))}
 const TYP=x=>x.c>0?"polyarticulaire":"isolation";
 /* Consigne du coach pour une séance (semaine w, séance j) */
 const coNote=(N,w,j)=>{N=N||{};return N[w+"-"+j]||N["*-"+j]||""};
-const modTx=r=>r.t==="sw"?`${r.a} → ${r.b}`:r.t==="rm"?`${r.a} retiré`:`${r.b} ajouté (${r.s} séries)`;
+const modTx=r=>r.t==="ord"?"Ordre des exercices changé":r.t==="home"?"Séance faite à la maison, sans matériel":r.t==="sw"?`${r.a} → ${r.b}`:r.t==="rm"?`${r.a} retiré`:`${r.b} ajouté (${r.s} séries)`;
 const modSc=r=>r.c==="*"?"partout":/^\*-/.test(r.c)?"chaque semaine, séance "+(+r.c.slice(2)+1):"une seule séance";
+/* ---------- Séance à la maison, sans matériel ----------
+Règle {c:"w-j",t:"home"}, posée sur la séance du jour. Chaque exercice qui demande du matériel est remplacé par un exercice
+au poids du corps du même muscle (même type si possible) : mêmes séries, répétitions réglées comme pour « Remplacer ».
+Le reste (ordre, volume par muscle, consignes) ne bouge pas. Les séances de course, mobilité et cardio dehors restent telles quelles. */
+const corpsOK=x=>x.e.includes("C")&&!/^(Tractions|Dips aux)/.test(x.n);
+const HPF={cui:["Squat bulgare","Fentes","Squat tempo lent","Step-up sur chaise","Squat Cossack","Squat pistolet assisté","Squat sur banc (box squat)","Step-down contrôlé","Chaise murale"],
+pec:["Pompes","Pompes pieds surélevés","Pompes lentes","Pompes serrées","Pompes mains surélevées","Pompes archer"],dos:["Rowing inversé","Rowing inversé supination","Superman au sol"],dlp:["Y-T-W au sol"],
+epa:["Pike push-ups","Pike pieds surélevés","Poirier contre le mur"],isc:["Soulevé roumain une jambe","Pont une jambe","Curl ischios avec serviette"],
+fes:["Hip thrust une jambe","Pont fessier pieds surélevés","Fentes arrière","Step-up latéral","Fente latérale","Pont fessier lent","Pont fessier","Frog pump"],
+tri:["Dips sur chaise","Pompes diamant"],bic:["Curl inversé sous une table"],mol:["Mollets à une jambe","Mollets sur une marche","Tibialis raise"],
+abd:["Dead bug","Planche (gainage)","Crunch inversé","Relevé de jambes","Gainage latéral","Position creuse (hollow hold)","Bird dog","Crunch","Russian twist"],
+car:["Montées de genoux","Burpees","Mountain climbers","Jumping jacks","Boxe dans le vide","Skaters (patineur)","Corde à sauter"]};
+/* Pour les grands mouvements du 5/3/1 : la variante au poids du corps la plus exigeante */
+const H531={Squat:["cui",["Squat pistolet assisté","Squat bulgare","Fentes"]],"Développé couché":["pec",["Pompes archer","Pompes pieds surélevés","Pompes"]],"Soulevé de terre":["isc",["Soulevé roumain une jambe","Pont une jambe"]],"Développé militaire":["epa",["Pike pieds surélevés","Pike push-ups"]]};
+const homeP=p=>({...p,mat:"corps",eq:["banc"].concat(p.mat!=="salle"&&Array.isArray(p.eq)&&p.eq.includes("barre")?["barre"]:[])});
+/* Si le muscle n’a plus d’équivalent libre dans la séance : un muscle voisin qui travaille dans le même mouvement */
+const HFB={epa:["dlp"],dlp:["epa","dos"],bic:["dos"],tri:["pec"],pec:["tri"],dos:["dlp"],cui:["fes"],fes:["cui","isc"],isc:["fes"],mol:["cui"]};
+function homeAlt(x,p,used,pf,nb){const pc=homeP(p),li=liOf(p),f=p.sexe==="f",bar=pc.eq.includes("barre");
+const a=pool(x.g,"corps",+p.niveau,f,bar).all.filter(c=>exOK(c,pc)&&!used.has(c.n)&&!(li&&JUMP.test(c.n)));
+if(!a.length){if(nb)return null;for(const g of HFB[x.g]||[]){const y=homeAlt({...x,g},p,used,HPF[g]&&x.g==="bic"?["Rowing inversé supination","Rowing inversé"]:x.g==="tri"?["Pompes serrées","Pompes diamant"]:null,1);if(y)return y}return null}
+pf=pf||HPF[x.g]||[];const jx=JUMP.test(x.n),tx=TIME.test(x.n),sc=c=>((c.c>0)!==(x.c>0)?100:0)+(JUMP.test(c.n)&&!jx?50:0)+(TIME.test(c.n)!==tx?20:0)+(pf.includes(c.n)?pf.indexOf(c.n):15);
+return a.slice().sort((u,v)=>sc(u)-sc(v)||a.indexOf(u)-a.indexOf(v))[0]}
+const HTX=[[/abduction avec élastique/g,"abduction couché sur le côté"],[/[Mm]arche latérale avec élastique/g,m=>m[0]+"arche latérale en demi-squat"],[/fire hydrants avec élastique/g,"fire hydrants"],[/pas latéraux avec élastique/g,"pas latéraux en demi-squat"],
+[/Rotation externe à l’élastique, coude collé/g,"Rotation externe allongé sur le côté, coude collé (avec une bouteille d’eau)"],[/rameur ou vélo,/g,"montées de genoux ou marche rapide,"],[/vélo ou marche rapide en pente,/g,"montées de genoux ou marche rapide en côte,"],[/marche rapide ou vélo,/g,"marche rapide ou montées de genoux,"],
+[/^Finisher 8 min : portage de charges ou marche rapide chargée, 4 × 40 m$/,"Finisher 8 min : 4 tours de (40 s de chaise murale, 20 s de montées de genoux), 30 s de repos"],
+[/^Lancers de ballon de \d+ kg \(ou lancers poitrine contre un mur\)/,"Pompes explosives (ou pompes rapides mains surélevées)"],
+[/^(Vélo|Rameur|Elliptique ou ski-erg|Natation continue ou aquagym|Marche rapide en pente \(ou tapis incliné\)) : /,"Marche rapide ou course facile, dehors : "],[/^Vélo, rameur, natation ou elliptique : /,"Marche rapide ou course facile : "],
+[/^(Progression : quand tu atteins le haut de la fourchette|Choisis la charge \(sac, haltères, élastique\)).*$/,"Progression : choisis la variante (ou un sac à dos chargé) qui garde la marge indiquée. Au-delà de 15 répétitions faciles, passe à la variante plus difficile (voir le Guide)."]];
+function homeS(s,p,ow){if(p.mat==="corps")return s;const pc=homeP(p),it=s.it.slice(),tg=s.tg?s.tg.slice():null,used=new Set(),L=+p.niveau,li=liOf(p);let ch=0,ds=0,f5=0;
+it.forEach(l=>{const m=/^(.+?) : /.exec(l);if(m&&LBN[m[1]])used.add(m[1])});
+for(let i=0;i<it.length;i++){let l=it[i];
+/* Grands mouvements 5/3/1 : sans barre, les pourcentages n’ont pas de sens */
+const m5=l.match(/^(Squat|Développé couché|Soulevé de terre|Développé militaire) \(séries 5\/3\/1\) : /);
+if(m5){const[g,pf]=H531[m5[1]],x=homeAlt({n:"",g,c:2,ra:1},p,used,pf);const bb=/^Supplémentaire « /.test(it[i+2]||"")||/^Supplémentaire « /.test(it[i+1]||"");
+if(x){used.add(x.n);it[i]=mkLine(x.n,TIME.test(x.n)?3:bb?5:3,repsFor(x,ow,p),ow,pc,{})}else{it.splice(i,1);if(tg)tg.splice(i,1);i--}ch=f5=1;continue}
+if(/^(Training Max de |Supplémentaire « |Si tu atteins moins de répétitions)/.test(l)){it.splice(i,1);if(tg)tg.splice(i,1);i--;ch=1;continue}
+if(/^Échauffement \d+ min, puis séries d’approche : \d+ %/.test(l)){it[i]=l.replace(/puis séries d’approche : .*$/,"puis 1 série facile de chaque exercice principal");ch=1;continue}
+if(/^Technique de la semaine : série « \+ »/.test(l)){it[i]="Technique de la semaine : prends la variante la plus difficile que tu maîtrises et arrête-toi 1 à 2 répétitions avant l’échec.";ch=1;continue}
+const m=/^(.+?) : (.*)$/.exec(l),o=m&&LBN[m[1]];
+if(o&&!corpsOK(o)){const x=homeAlt(o,p,used);
+if(!x){if(EXL.test(l)){ds-=+l.match(EXL)[2];it.splice(i,1);if(tg)tg.splice(i,1);i--;ch=1}continue}
+used.add(x.n);const e=l.match(EXL);
+if(e&&modOK(l)){let rr=e[3].replace(/ par côté$/,"");if(TIME.test(o.n)!==TIME.test(x.n)||(o.c===2&&o.ra===0)!==(x.c===2&&x.ra===0))rr=repsFor(x,ow,p);it[i]=mkLine(x.n,+e[2],rr,ow,pc,{})}
+else{let r=m[2].replace(/ · environ .*$/,"");if(UNIT[o.n]&&r.startsWith(UNIT[o.n]))r=amt(x,[8,10,12][L])+r.slice(UNIT[o.n].length);it[i]=x.n+" : "+r}
+ch=1;continue}
+let t=l;HTX.forEach(([re,v])=>{t=t.replace(re,v)});if(li)t=t.replace("Pompes explosives (ou pompes rapides mains surélevées)","Pompes rapides mains surélevées");if(t!==l){it[i]=t;ch=1}}
+if(!ch)return s;
+if(f5){const r=Math.max(0,it.findIndex(z=>/^Repos/.test(z)));if(tg)tg.splice(r,0,"");it.splice(r,0,"À la maison, le 5/3/1 est mis en pause : sans barre, ses pourcentages ne s’appliquent pas. Cette séance entretient ta force ; ta progression reprend à la prochaine séance avec charge.")}
+wupFix(it,pc);return{...s,it,tg:tg&&tg.length===it.length?tg:undefined,home:1,d:Math.max(10,r5(parseInt(s.d)+ds*2.4))+" min"}}
+/* La séance peut-elle passer « à la maison » ? */
+const homeCan=(s,p,ow)=>!!s&&!s.home&&homeS(s,p,ow)!==s;
 
 /* Règles qui touchent une séance donnée */
 const modsOf=(w,j)=>(data.mods||[]).filter(r=>r.c===w+"-"+j||r.c==="*-"+j);
