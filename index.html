@@ -562,7 +562,7 @@ body.running #rmini{display:none}
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
 import{getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,deleteUser,reauthenticateWithCredential,EmailAuthProvider}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
-import{getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,terminate,clearIndexedDbPersistence,doc,getDoc,setDoc,deleteDoc}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
+import{getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,terminate,clearIndexedDbPersistence,doc,getDoc,setDoc,deleteDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
 const fb=initializeApp({apiKey:"AIzaSyCpeBNqDropla1CKUzJWgS7kyB5qwH5BvA",authDomain:"gauthier-coaching.firebaseapp.com",projectId:"gauthier-coaching",storageBucket:"gauthier-coaching.firebasestorage.app",messagingSenderId:"383165911782",appId:"1:383165911782:web:2bba35f1ff9f1a1882a127"});
 const auth=getAuth(fb);let db;try{db=initializeFirestore(fb,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){db=getFirestore(fb)}
 try{document.documentElement.dataset.t=matchMedia("(prefers-color-scheme: light)").matches?"l":"d"}catch(e){}
@@ -2180,14 +2180,21 @@ $("#nv").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset
 $("#nv").onclick=e=>{const b=e.target.closest("button");if(b){tab=b.dataset.t;render();scrollTo(0,0)}};
 $("#av").onclick=()=>{if(data.p&&!editing){tab="c";render();scrollTo(0,0)}};
 try{matchMedia("(prefers-color-scheme: light)").addEventListener("change",()=>{if(!(data.theme==="l"||data.theme==="d"))render()})}catch(e){}
-onAuthStateChanged(auth,async u=>{try{if(RUN){runSave();clearInterval(RUN.iv);RUN=null;miniOff();const el=$("#run");if(el){el.hidden=true;el.innerHTML=""}document.body.classList.remove("running")}}catch(e){}user=u;editing=false;wk=0;data={p:null,done:{},tests:[],logs:{},checks:{},body:[],lifts:{}};
+onAuthStateChanged(auth,async u=>{liveOff();try{if(RUN){runSave();clearInterval(RUN.iv);RUN=null;miniOff();const el=$("#run");if(el){el.hidden=true;el.innerHTML=""}document.body.classList.remove("running")}}catch(e){}user=u;editing=false;wk=0;data={p:null,done:{},tests:[],logs:{},checks:{},body:[],lifts:{}};
 if(u){try{const s=await getDoc(doc(db,"clients",u.uid));if(s.exists())data={...data,...s.data()};try{const cs=await getDoc(doc(db,"coach",u.uid));CO=cs.exists()?cs.data()||{}:{}}catch(e){CO={}}try{initBadges()}catch(e){}try{if(data.p&&!data.dep)data.dep=depDe(data)}catch(e){}if(data.p){try{const G0=genH(data.p,data.tests,data.lifts),nx=nextS(G0);wk=nx?nx[0]:G0.length-1}catch(e){}}}catch(e){A.innerHTML='<div class="warn">Impossible de charger ton profil. Vérifie ta connexion puis recharge la page.</div>';return}}
-render();try{runRestore()}catch(e){}});
-/* Changements du coach : relus quand l’appli revient au premier plan (au plus une fois par minute), sans attendre une reconnexion */
-let coT=0;async function coRefresh(){if(!user||!data.p||Date.now()-coT<60000)return;coT=Date.now();
-try{const cs=await getDoc(doc(db,"coach",user.uid)),n=cs.exists()?cs.data()||{}:{};if(JSON.stringify(n)===JSON.stringify(CO))return;CO=n;
-if(typeof RUN!=="undefined"&&RUN)return;if(editing||(typeof dg!=="undefined"&&dg&&dg.open))return;render()}catch(e){}}
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")coRefresh()});addEventListener("focus",coRefresh);
+render();try{runRestore()}catch(e){}if(u&&data.p!==undefined)liveOn(u);else liveOff()});
+/* Fiche et changements du coach suivis en direct : si le client utilise un autre appareil, ou si le coach modifie une séance,
+   cet appareil reçoit tout de suite la version à jour. Ainsi un appareil resté ouvert n’enregistre jamais une vieille copie. */
+let unsub=[],stale=false;const stab=o=>JSON.stringify(o,(k,v)=>v&&typeof v==="object"&&!Array.isArray(v)?Object.keys(v).sort().reduce((a,x)=>(a[x]=v[x],a),{}):v);
+const live=()=>!(typeof RUN!=="undefined"&&RUN&&!RUN.min)&&!editing&&!(typeof dg!=="undefined"&&dg&&dg.open);
+function liveOff(){unsub.forEach(f=>{try{f()}catch(e){}});unsub=[]}
+function liveOn(u){liveOff();try{
+unsub.push(onSnapshot(doc(db,"clients",u.uid),s=>{if(user!==u||!s.exists()||(s.metadata&&(s.metadata.hasPendingWrites||s.metadata.fromCache))||pend)return;const d=s.data()||{};if(stab(d)===stab(data))return;
+data={p:null,done:{},tests:[],logs:{},checks:{},body:[],lifts:{},...d};if(live())render();else stale=true},()=>{}));
+unsub.push(onSnapshot(doc(db,"coach",u.uid),s=>{if(user!==u||(s.metadata&&s.metadata.fromCache))return;const n=s.exists()?s.data()||{}:{};if(stab(n)===stab(CO))return;CO=n;if(live()&&data.p)render();else stale=true},()=>{}))}catch(e){}}
+/* Revenir sur l’appli redessine l’écran si une mise à jour est arrivée pendant une fenêtre ouverte */
+document.addEventListener("visibilitychange",()=>{if(stale&&document.visibilityState==="visible"&&user&&data.p&&live()){stale=false;render()}});
+try{$("#dg").addEventListener("close",()=>{if(stale&&user&&data.p&&live()){stale=false;render()}})}catch(e){}
 </script>
 </body>
 </html>
