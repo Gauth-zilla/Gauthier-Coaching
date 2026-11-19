@@ -1280,24 +1280,26 @@ return out}
 Couche posée sur le programme calculé (gen() n’est pas modifié). Ce qui fait progresser, c’est le nombre de séries par muscle
 et l’effort, pas le nombre d’exercices (Schoenfeld 2017, Pelland 2026). Au-delà de 6 exercices :
 1. un exercice d’un muscle déjà travaillé dans la séance est retiré (l’isolation d’abord) et ses séries passent à l’autre
-   exercice de ce muscle (6 séries au plus par exercice) : le volume du muscle est gardé ;
+   exercice de ce muscle, 4 séries au plus par exercice ;
 2. sinon, un exercice d’un petit muscle déjà sollicité par les grands mouvements (abdos, mollets, arrière d’épaule, biceps,
    triceps, cardio) est retiré.
+Les séries qui ne trouvent pas de place vont au même muscle dans une autre séance de la semaine (4 séries au plus par
+exercice) : c’est le volume de la semaine qui compte, pas sa répartition (Schoenfeld 2019).
 Les grands mouvements du 5/3/1 et les épreuves du test militaire ne sont jamais retirés. */
-const MAXEX=6;
+const MAXEX=6,MAXSR=4;
 const exCount=it=>it.filter(l=>/^(Squat|Développé couché|Soulevé de terre|Développé militaire) \(séries 5\/3\/1\)/.test(l)||/^(.+?) : \d+ × /.test(l)).length;
 /* Muscle d’une ligne : exercice du Guide, ou ligne libre devinée à partir de son nom */
 const FGU=[[/pompe|développé|dips|lancer/i,"pec"],[/sit-up|crunch|gainage|planche|abdo|relevé/i,"abd"],[/traction|rowing|tirage/i,"dos"],[/squat|fente|chaise|step|saut/i,"cui"],[/burpee|course|corde|sprint|montées|jumping/i,"car"],[/pont|hip thrust|fessier/i,"fes"],[/épaule|militaire|pike/i,"epa"],[/mollet/i,"mol"]];
 const lnG=l=>{const m=/^(.+?) : \d+ × /.exec(l);if(!m)return null;const x=LBN[m[1]];if(x)return KG(x.g);for(const[r,g]of FGU)if(r.test(m[1]))return g;return null};
 const SMALLG=["abd","mol","car","bic","tri"];
-function capS(s,p){let it=s.it.slice();if(exCount(it)<=MAXEX)return s;let tg=s.tg?s.tg.slice():null,lost=0,ch=0;
+function capS(s,p){let it=s.it.slice();const left={};if(exCount(it)<=MAXEX)return[s,left];let tg=s.tg?s.tg.slice():null,lost=0,ch=0;
 const ss=/Format (superset|circuit)/.test(it.join(" ")),tst=/pour le test/.test(s.nm),cand=()=>it.map((l,i)=>[l,i]).filter(([l])=>EXL.test(l)&&LBN[(l.match(EXL)||[])[1]]&&!/\(séries 5\/3\/1\)/.test(l)&&!(tst&&/^Pompes : /.test(l)));
 while(exCount(it)>MAXEX){const C=cand(),G=it.map(lnG),nS=l=>+l.match(EXL)[2],isC=l=>LBN[l.match(EXL)[1]].c>0;let pick=null,to=-1;
-/* L’exercice qui reçoit les séries : l’autre exercice du même muscle qui a le plus de place (6 séries au plus) */
-const dest=i=>{let b=-1,r=-1;it.forEach((l,k)=>{if(k!==i&&G[k]===G[i]&&EXL.test(l)&&LBN[l.match(EXL)[1]]&&!/\(séries 5\/3\/1\)/.test(l)){const f=6-nS(l);if(f>r){r=f;b=k}}});return[b,r]};
+/* L’exercice qui reçoit les séries : l’autre exercice du même muscle qui a le plus de place (4 séries au plus) */
+const dest=i=>{let b=-1,r=-1;it.forEach((l,k)=>{if(k!==i&&G[k]===G[i]&&EXL.test(l)&&LBN[l.match(EXL)[1]]&&!/\(séries 5\/3\/1\)/.test(l)){const f=Math.max(0,MAXSR-nS(l));if(f>r){r=f;b=k}}});return[b,r]};
 const dup=C.filter(([l,i])=>dest(i)[0]>=0).sort((a,b)=>isC(a[0])-isC(b[0])||b[1]-a[1]);
 /* 1. même muscle deux fois et toutes les séries trouvent leur place : volume du muscle gardé */
-const ok=dup.find(([l,i])=>dest(i)[1]>=nS(l));
+const ok=dup.find(([l,i])=>dest(i)[1]>=nS(l)&&dest(i)[1]>0);
 if(ok){pick=ok[1];to=dest(pick)[0]}
 else{/* 2. un petit muscle déjà sollicité par les grands mouvements */
 const sm=C.filter(([l,i])=>SMALLG.includes(G[i])).sort((a,b)=>SMALLG.indexOf(G[a[1]])-SMALLG.indexOf(G[b[1]])||b[1]-a[1]);
@@ -1307,10 +1309,14 @@ else if(dup.length){pick=dup[0][1];to=dest(pick)[0]}
 /* 4. dernier recours : un muscle aussi travaillé par une ligne libre */
 else{const fr=C.filter(([l,i])=>G.some((g,k)=>k!==i&&g&&g===G[i])).sort((a,b)=>isC(a[0])-isC(b[0])||b[1]-a[1]);if(fr.length)pick=fr[0][1]}}
 if(pick==null)break;
-const n=+it[pick].match(EXL)[2];if(to>=0){const m=it[to].match(EXL),k=+m[2],add=Math.max(0,Math.min(n,6-k));it[to]=it[to].replace(/^(.+?) : \d+ × /,"$1 : "+(k+add)+" × ");lost+=n-add}else lost+=n;
+const n=+it[pick].match(EXL)[2],g=lnG(it[pick]);let add=0;if(to>=0){const k=+it[to].match(EXL)[2];add=Math.max(0,Math.min(n,MAXSR-k));if(add)it[to]=it[to].replace(/^(.+?) : \d+ × /,"$1 : "+(k+add)+" × ")}lost+=n-add;if(n-add>0&&g)left[g]=(left[g]||0)+n-add;
 it.splice(pick,1);if(tg)tg.splice(pick,1);ch=1}
-if(!ch)return s;wupFix(it,p||{});return{...s,it,tg:tg||undefined,d:Math.max(10,r5(parseInt(s.d)-lost*(ss?1.75:2.4)))+" min"}}
-const capP=(P,p)=>{P.forEach(W=>{W.s=W.s.map(s=>capS(s,p))});return P};
+if(!ch)return[s,left];wupFix(it,p||{});return[{...s,it,tg:tg||undefined,d:Math.max(10,r5(parseInt(s.d)-lost*(ss?1.75:2.4)))+" min"},left]}
+/* Séries restantes : au même muscle, dans une autre séance de la semaine, sans dépasser 4 séries par exercice */
+function capW(W,p){const R=W.s.map(s=>capS(s,p)),L={};R.forEach(([,l])=>Object.entries(l).forEach(([g,n])=>L[g]=(L[g]||0)+n));W.s=R.map(r=>r[0]);
+Object.entries(L).forEach(([g,n])=>{let go=true;while(n>0&&go){go=false;for(let j=0;j<W.s.length&&n>0;j++){const s=W.s[j],i=s.it.findIndex(l=>lnG(l)===g&&EXL.test(l)&&LBN[l.match(EXL)[1]]&&!/\(séries 5\/3\/1\)/.test(l)&&+l.match(EXL)[2]<MAXSR);if(i<0)continue;
+const it=s.it.slice(),k=+it[i].match(EXL)[2];it[i]=it[i].replace(/^(.+?) : \d+ × /,"$1 : "+(k+1)+" × ");W.s[j]={...s,it,d:r5(parseInt(s.d)+(/Format (superset|circuit)/.test(it.join(" "))?1.75:2.4))+" min"};n--;go=true}}})}
+const capP=(P,p)=>{P.forEach(W=>capW(W,p));return P};
 
 /* ---------- Vues ---------- */
 const SANTE=["Douleur ou gêne dans la poitrine à l’effort","Vertiges ou malaises à l’effort","Problème cardiaque ou tension artérielle élevée connue","Douleur articulaire ou blessure récente (genou, dos, épaule, cheville)","Asthme ou problème respiratoire non contrôlé","Grossesse ou accouchement récent","Traitement médical qui limite l’effort"];
