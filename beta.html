@@ -1293,7 +1293,7 @@ else s2=Bw.s.map((s,k)=>isT(s)?(light||B[Math.max(0,i-1)]).s[k]:s);
 const X={...W,s:W.s.map(s=>({...s})).concat(s2.map(s=>({...s,o2:1}))),f:W.f+" Deuxième objectif ("+OBJ[o2].toLowerCase()+") : "+nS+" séance"+(nS>1?"s":"")+" cette semaine."};
 hySched(X,p);return X});out.A=A;return out}
 /* Programme affiché : moteur (un ou deux objectifs), puis six exercices au maximum par séance */
-function genH(p,T,H){return capP(genH0(p,T,H),p)}
+function genH(p,T,H,v){return varP(capP(genH0(p,T,H),p),p,H,v)}
 function genH0(p,T,H){if(!hyOn(p))return gen(p,T,H);
 const[nP,nS]=HYS[p.seances],o2=p.obj2,auto=!p.prog||p.prog==="auto",alt=auto&&HYALT[p.objectif]?HYALT[p.objectif][p.sexe==="f"?"f":"h"].filter(id=>METH[id]&&METH[id].plan[nP]&&progOpts(p.objectif,nP,p.mat,p.sexe).some(x=>x[0]===id)):[];
 let out=hyBuild(p,T,H,p.prog||"auto"),sw=false,c0=hyClash(out);
@@ -1342,6 +1342,21 @@ function capW(W,p){const R=W.s.map(s=>capS(s,p)),L={};R.forEach(([,l])=>Object.e
 Object.entries(L).forEach(([g,n])=>{let go=true;while(n>0&&go){go=false;for(let j=0;j<W.s.length&&n>0;j++){const s=W.s[j],i=s.it.findIndex(l=>lnG(l)===g&&EXL.test(l)&&LBN[l.match(EXL)[1]]&&!/\(séries 5\/3\/1\)/.test(l)&&+l.match(EXL)[2]<MAXSR);if(i<0)continue;
 const it=s.it.slice(),k=+it[i].match(EXL)[2];it[i]=it[i].replace(/^(.+?) : \d+ × /,"$1 : "+(k+1)+" × ");W.s[j]={...s,it,d:r5(parseInt(s.d)+(/Format (superset|circuit)/.test(it.join(" "))?1.75:2.4))+" min"};n--;go=true}}})}
 const capP=(P,p)=>{P.forEach(W=>capW(W,p));return P};
+/* ---------- Variation des exercices d’un cycle à l’autre ----------
+Couche posée sur le programme calculé (gen() n’est pas modifié). À chaque nouveau cycle (data.vr = 1, 2, …), les exercices
+d’isolation (exercices d’appoint) tournent vers un autre exercice d’isolation du même muscle, compatible avec le matériel,
+le niveau et les zones sensibles : mêmes séries, mêmes répétitions. Les exercices polyarticulaires (squat, développés,
+tirages, soulevés…) ne changent jamais : ce sont eux qui mesurent la progression. Le même exercice d’origine devient le même
+remplaçant toutes les semaines du cycle. Changer les exercices d’appoint toutes les 4 à 8 semaines entretient la motivation
+et travaille le muscle sous d’autres angles (Kassiano 2022, Baz-Valle 2019). Premier cycle (vr = 0) : rien ne change. */
+/* Le relevé des pointes (tibia) a un rôle de prévention : il ne tourne pas */
+const TIBR=/^Tibialis/;
+function varP(P,p,H,v){v=+v||0;if(!v||!P)return P;const mp={};
+const alt=x=>{if(mp[x.n]!==undefined)return mp[x.n];const L=[x.n].concat(candOf(x.g,p,[x.n]).filter(c=>c.c===0&&TIME.test(c.n)===TIME.test(x.n)&&!TIBR.test(c.n)).map(c=>c.n)).sort((a,b)=>a.localeCompare(b,"fr"));return mp[x.n]=L[(L.indexOf(x.n)+v)%L.length]};
+P.forEach((W,wi)=>{const ow=W.ow??wi;W.s=W.s.map(s=>{let ch=0;const it=s.it.slice();
+it.forEach((l,i)=>{if(!modOK(l))return;const x=LBN[exNm(l)];if(!x||x.c!==0)return;if(TIBR.test(x.n))return;const n=alt(x);if(n===x.n||it.some(z=>exNm(z)===n))return;
+const m=l.match(EXL);it[i]=mkLine(n,+m[2],m[3].replace(/ par côté$/,"").replace(/ \(d’après tes séries\)$/,""),ow,p,H);ch=1});
+if(!ch)return s;wupFix(it,p);return{...s,it}})});return P}
 
 /* ---------- Vues ---------- */
 const SANTE=["Douleur ou gêne dans la poitrine à l’effort","Vertiges ou malaises à l’effort","Problème cardiaque ou tension artérielle élevée connue","Douleur articulaire ou blessure récente (genou, dos, épaule, cheville)","Asthme ou problème respiratoire non contrôlé","Grossesse ou accouchement récent","Traitement médical qui limite l’effort"];
@@ -1412,7 +1427,7 @@ const G=[
 [/soulevé|pont fessier|mollets/,"Soulevé roumain, pont fessier, mollets","Soulevé : dos plat, genoux légèrement fléchis, bassin vers l’arrière.|Pont : serre les fessiers en haut.|Mollets : monte lentement sur la pointe des pieds.","Dos arrondi sur le soulevé.","Charge légère, amplitude réduite.","Fais l’exercice sur une jambe."]];
 const NIV=["Débutant","Intermédiaire","Avancé"];
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
-const ctx=()=>{const p=data.p,b=(data.body||[]).slice(-1)[0],P=applyMods(genH(p,data.tests,data.lifts),p,data.lifts),m=calc(p,b);return{p,m,P,tot:P.reduce((a,w)=>a+w.s.length,0),dn:Object.values(data.done).filter(Boolean).length}};
+const ctx=()=>{const p=data.p,b=(data.body||[]).slice(-1)[0],P=applyMods(genH(p,data.tests,data.lifts,data.vr),p,data.lifts),m=calc(p,b);return{p,m,P,tot:P.reduce((a,w)=>a+w.s.length,0),dn:Object.values(data.done).filter(Boolean).length}};
 const nextS=P=>{for(let w=0;w<P.length;w++)for(let j=0;j<P[w].s.length;j++)if(!data.done[w+"-"+j])return[w,j];return null};
 let tab="a",step=0;
 const dg=$("#dg");dg.onclick=e=>{if(e.target===dg)dg.close()};
@@ -1475,8 +1490,13 @@ let focusS=null;const OS={};
 function openSess(w,j){tab="p";wk=w;OS[w+"-"+j]=true;focusS=j;render()}
 async function newCycle(){if(!confirm("Lancer un nouveau cycle d’entraînement ? Les séances cochées repartent à zéro. Ton historique, tes tests et tes charges notées sont conservés : les charges du nouveau cycle partent de tes meilleures séries."))return;
 const L=data.lifts||{};Object.keys(L).forEach(k=>{const a=L[k];if(!a.length)return;const wl=Math.max(...a.map(e=>e.w));L[k]=a.map(e=>({...e,w:e.w===wl?-1:Math.min(e.w,-1)-100}))});
-if(RUN)runClose(true);const c=data.cyc||1;data.arch=(data.arch||[]).concat(Object.values(data.logs||{}).map(l=>({...l,c})));data.logs={};data.done={};if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>/^\*/.test(r.c));data.cyc=c+1;data.pid=Date.now().toString(36);data.start=today();wk=0;if(data.p&&data.p.dtest)data.p.nw=nwOf(data.p.dtest,today());
-checkBadges(1);await save();render();scrollTo(0,0);flash("Nouveau cycle lancé")}
+let plan=0,fait=0;try{const{P}=ctx();plan=P.reduce((a,W)=>a+W.s.length,0);fait=P.reduce((a,W,i)=>a+W.s.filter((s,j)=>data.done[i+"-"+j]).length,0)}catch(e){}
+if(RUN)runClose(true);const c=data.cyc||1;data.arch=(data.arch||[]).concat(Object.values(data.logs||{}).map(l=>({...l,c})));data.logs={};data.done={};if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>/^\*/.test(r.c));data.cyc=c+1;data.vr=(data.vr||0)+1;data.pid=Date.now().toString(36);data.start=today();wk=0;if(data.p&&data.p.dtest)data.p.nw=nwOf(data.p.dtest,today());
+checkBadges(1);await save();render();scrollTo(0,0);flash("Nouveau cycle lancé");
+/* Cycle bien mené (70 % des séances au moins) : proposer le niveau au-dessus. Le client garde le choix. */
+const nv=+((data.p||{}).niveau||0);if(nv<2&&plan&&fait/plan>=.7)lvlUp(nv,Math.round(fait/plan*100))}
+function lvlUp(nv,pc){const L=["Débutant","Intermédiaire","Avancé"];modal(`<h3>Bravo, cycle terminé à ${pc} % !</h3><p>Ton corps s’est adapté. Pour continuer à progresser, tu peux passer au niveau <b>${L[nv+1]}</b> : un peu plus de volume et des exercices plus exigeants. Tes charges repartent toujours de tes meilleures séries.</p><p class="mu">Tu pourras changer de niveau quand tu veux dans ton profil.</p><div class="row"><button id="lvy">Passer en ${L[nv+1].toLowerCase()}</button><button class="o" id="lvn">Rester en ${L[nv].toLowerCase()}</button></div>`);
+$("#lvy").onclick=async()=>{data.p={...data.p,niveau:nv+1};data.pid=Date.now().toString(36);dg.close();await save();render();flash("Niveau "+L[nv+1].toLowerCase()+" : ton programme est recalculé")};$("#lvn").onclick=()=>dg.close()}
 function viewHome(){const{p,m,P,tot,dn}=ctx(),nx=nextS(P),cw=nx?nx[0]:P.length-1,ck=data.checks[today()],W=P[cw],cm=f1;
 const s0=new Date((data.start||today())+"T12:00:00"),e0=new Date(s0.getTime()+(P.length*7-1)*864e5),df=d=>d.toLocaleDateString("fr-BE",{day:"numeric",month:"short"});
 const st=(l,ic,v,u,c)=>`<div><div class="h"><span>${l}</span>${IC(ic)}</div><b>${v}<small>${u}</small></b><span class="c">${c}</span></div>`;
@@ -1626,7 +1646,7 @@ const BPR={s1:x=>[x.n,1],s10:x=>[x.n,10],s25:x=>[x.n,25],s50:x=>[x.n,50],s100:x=
 const BUN={s:["séance","séances"],f:["semaine régulière","semaines régulières"],r:["record","records"],t:["test","tests"]};
 function bLeft(b,x){const f=BPR[b[0]];if(!f)return b[2];const[h,g]=f(x),l=Math.max(0,g-h),u=BUN[b[4]]||["",""];return"Encore "+l+" "+(l>1?u[1]:u[0])}
 const bIco=(b,ok)=>`<span class="bi k${b[4]}${ok?" ok":""}">${IC(BI[b[4]])}</span>`;
-function stats(){let P=null;try{P=data.p?genH(data.p,data.tests,data.lifts):null}catch(e){}const d=data.done||{},g=regul(),all=(w,i)=>w.s.length>0&&w.s.every((_,j)=>d[i+"-"+j]),c2=(data.cyc||1)>1;
+function stats(){let P=null;try{P=data.p?genH(data.p,data.tests,data.lifts,data.vr):null}catch(e){}const d=data.done||{},g=regul(),all=(w,i)=>w.s.length>0&&w.s.every((_,j)=>d[i+"-"+j]),c2=(data.cyc||1)>1;
 return{n:allLogs().filter(l=>l.ok==="oui").length,...g,rec:nRec(),t:(data.tests||[]).length,fw:c2||(P?P.some(all):false),cy:c2||(P?P.every(all):false)}}
 const earnedB=x=>BDG.filter(b=>b[3](x)).map(b=>b[0]);
 function initBadges(){if(data.p&&!Array.isArray(data.bseen))data.bseen=earnedB(stats())}
@@ -2201,7 +2221,7 @@ $("#nv").onclick=e=>{const b=e.target.closest("button");if(b){tab=b.dataset.t;re
 $("#av").onclick=()=>{if(data.p&&!editing){tab="c";render();scrollTo(0,0)}};
 try{matchMedia("(prefers-color-scheme: light)").addEventListener("change",()=>{if(!(data.theme==="l"||data.theme==="d"))render()})}catch(e){}
 onAuthStateChanged(auth,async u=>{liveOff();try{if(RUN){runSave();clearInterval(RUN.iv);RUN=null;miniOff();const el=$("#run");if(el){el.hidden=true;el.innerHTML=""}document.body.classList.remove("running")}}catch(e){}user=u;editing=false;wk=0;data={p:null,done:{},tests:[],logs:{},checks:{},body:[],lifts:{}};
-if(u){try{const s=await getDoc(doc(db,"clients",u.uid));if(s.exists())data={...data,...s.data()};try{const cs=await getDoc(doc(db,"coach",u.uid));CO=cs.exists()?cs.data()||{}:{}}catch(e){CO={}}try{initBadges()}catch(e){}try{if(data.p&&!data.dep)data.dep=depDe(data)}catch(e){}if(data.p){try{const G0=genH(data.p,data.tests,data.lifts),nx=nextS(G0);wk=nx?nx[0]:G0.length-1}catch(e){}}}catch(e){A.innerHTML='<div class="warn">Impossible de charger ton profil. Vérifie ta connexion puis recharge la page.</div>';return}}
+if(u){try{const s=await getDoc(doc(db,"clients",u.uid));if(s.exists())data={...data,...s.data()};try{const cs=await getDoc(doc(db,"coach",u.uid));CO=cs.exists()?cs.data()||{}:{}}catch(e){CO={}}try{initBadges()}catch(e){}try{if(data.p&&!data.dep)data.dep=depDe(data)}catch(e){}if(data.p){try{const G0=genH(data.p,data.tests,data.lifts,data.vr),nx=nextS(G0);wk=nx?nx[0]:G0.length-1}catch(e){}}}catch(e){A.innerHTML='<div class="warn">Impossible de charger ton profil. Vérifie ta connexion puis recharge la page.</div>';return}}
 render();try{runRestore()}catch(e){}if(u&&data.p!==undefined)liveOn(u);else liveOff()});
 /* Fiche et changements du coach suivis en direct : si le client utilise un autre appareil, ou si le coach modifie une séance,
    cet appareil reçoit tout de suite la version à jour. Ainsi un appareil resté ouvert n’enregistre jamais une vieille copie. */

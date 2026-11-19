@@ -768,7 +768,7 @@ else s2=Bw.s.map((s,k)=>isT(s)?(light||B[Math.max(0,i-1)]).s[k]:s);
 const X={...W,s:W.s.map(s=>({...s})).concat(s2.map(s=>({...s,o2:1}))),f:W.f+" Deuxième objectif ("+OBJ[o2].toLowerCase()+") : "+nS+" séance"+(nS>1?"s":"")+" cette semaine."};
 hySched(X,p);return X});out.A=A;return out}
 /* Programme affiché : moteur (un ou deux objectifs), puis six exercices au maximum par séance */
-function genH(p,T,H){return capP(genH0(p,T,H),p)}
+function genH(p,T,H,v){return varP(capP(genH0(p,T,H),p),p,H,v)}
 function genH0(p,T,H){if(!hyOn(p))return gen(p,T,H);
 const[nP,nS]=HYS[p.seances],o2=p.obj2,auto=!p.prog||p.prog==="auto",alt=auto&&HYALT[p.objectif]?HYALT[p.objectif][p.sexe==="f"?"f":"h"].filter(id=>METH[id]&&METH[id].plan[nP]&&progOpts(p.objectif,nP,p.mat,p.sexe).some(x=>x[0]===id)):[];
 let out=hyBuild(p,T,H,p.prog||"auto"),sw=false,c0=hyClash(out);
@@ -818,6 +818,22 @@ function capW(W,p){const R=W.s.map(s=>capS(s,p)),L={};R.forEach(([,l])=>Object.e
 Object.entries(L).forEach(([g,n])=>{let go=true;while(n>0&&go){go=false;for(let j=0;j<W.s.length&&n>0;j++){const s=W.s[j],i=s.it.findIndex(l=>lnG(l)===g&&EXL.test(l)&&LBN[l.match(EXL)[1]]&&!/\(séries 5\/3\/1\)/.test(l)&&+l.match(EXL)[2]<MAXSR);if(i<0)continue;
 const it=s.it.slice(),k=+it[i].match(EXL)[2];it[i]=it[i].replace(/^(.+?) : \d+ × /,"$1 : "+(k+1)+" × ");W.s[j]={...s,it,d:r5(parseInt(s.d)+(/Format (superset|circuit)/.test(it.join(" "))?1.75:2.4))+" min"};n--;go=true}}})}
 const capP=(P,p)=>{P.forEach(W=>capW(W,p));return P};
+
+/* ---------- Variation des exercices d’un cycle à l’autre ----------
+Couche posée sur le programme calculé (gen() n’est pas modifié). À chaque nouveau cycle (data.vr = 1, 2, …), les exercices
+d’isolation (exercices d’appoint) tournent vers un autre exercice d’isolation du même muscle, compatible avec le matériel,
+le niveau et les zones sensibles : mêmes séries, mêmes répétitions. Les exercices polyarticulaires (squat, développés,
+tirages, soulevés…) ne changent jamais : ce sont eux qui mesurent la progression. Le même exercice d’origine devient le même
+remplaçant toutes les semaines du cycle. Changer les exercices d’appoint toutes les 4 à 8 semaines entretient la motivation
+et travaille le muscle sous d’autres angles (Kassiano 2022, Baz-Valle 2019). Premier cycle (vr = 0) : rien ne change. */
+/* Le relevé des pointes (tibia) a un rôle de prévention : il ne tourne pas */
+const TIBR=/^Tibialis/;
+function varP(P,p,H,v){v=+v||0;if(!v||!P)return P;const mp={};
+const alt=x=>{if(mp[x.n]!==undefined)return mp[x.n];const L=[x.n].concat(candOf(x.g,p,[x.n]).filter(c=>c.c===0&&TIME.test(c.n)===TIME.test(x.n)&&!TIBR.test(c.n)).map(c=>c.n)).sort((a,b)=>a.localeCompare(b,"fr"));return mp[x.n]=L[(L.indexOf(x.n)+v)%L.length]};
+P.forEach((W,wi)=>{const ow=W.ow??wi;W.s=W.s.map(s=>{let ch=0;const it=s.it.slice();
+it.forEach((l,i)=>{if(!modOK(l))return;const x=LBN[exNm(l)];if(!x||x.c!==0)return;if(TIBR.test(x.n))return;const n=alt(x);if(n===x.n||it.some(z=>exNm(z)===n))return;
+const m=l.match(EXL);it[i]=mkLine(n,+m[2],m[3].replace(/ par côté$/,"").replace(/ \(d’après tes séries\)$/,""),ow,p,H);ch=1});
+if(!ch)return s;wupFix(it,p);return{...s,it}})});return P}
 
 /* ---------- Séances personnalisées : remplacer, retirer, ajouter un exercice ----------
 Le programme reste calculé par le moteur. Les changements du client sont des règles posées par-dessus :
@@ -962,7 +978,7 @@ const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth
 const dJours=d=>d?Math.round((new Date(today()+"T12:00:00")-new Date(d+"T12:00:00"))/864e5):null;
 const dFr2=d=>d?String(d).slice(8,10)+"/"+String(d).slice(5,7)+"/"+String(d).slice(2,4):"—";
 let CL=[],sel=null,wkC=0,q="",flt="all";
-function info(c){const p=c.p;if(!p)return{c,ok:false};let P=null,m=null;try{P=applyMods(genH(p,c.tests||[],c.lifts||{}),p,c.lifts||{},c.mods||[],(coOf(c.id).mods||[]).filter(r=>coOK(r,c.pid)));m=calc(p,(c.body||[]).slice(-1)[0])}catch(e){}
+function info(c){const p=c.p;if(!p)return{c,ok:false};let P=null,m=null;try{P=applyMods(genH(p,c.tests||[],c.lifts||{},c.vr),p,c.lifts||{},c.mods||[],(coOf(c.id).mods||[]).filter(r=>coOK(r,c.pid)));m=calc(p,(c.body||[]).slice(-1)[0])}catch(e){}
 const logs=Object.entries(c.logs||{}).map(([k,l])=>({k,...l})).concat((c.arch||[]).map((l,i)=>({k:"a"+i,...l}))).filter(l=>l&&l.d).sort((a,b)=>a.d<b.d?1:-1);
 const tot=P?P.reduce((a,w)=>a+w.s.length,0):0,dn=Object.values(c.done||{}).filter(Boolean).length,last=logs[0]?logs[0].d:null,dl=dJours(last),ds=dJours(c.start);
 let cw=0;if(P){cw=P.length-1;outer:for(let w=0;w<P.length;w++)for(let j=0;j<P[w].s.length;j++)if(!(c.done||{})[w+"-"+j]){cw=w;break outer}}
