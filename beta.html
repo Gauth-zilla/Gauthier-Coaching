@@ -1312,7 +1312,7 @@ Les séries qui ne trouvent pas de place vont au même muscle dans une autre sé
 exercice) : c’est le volume de la semaine qui compte, pas sa répartition (Schoenfeld 2019).
 Les grands mouvements du 5/3/1 et les épreuves du test militaire ne sont jamais retirés. */
 const MAXEX=6,MAXSR=4;
-const exCount=it=>it.filter(l=>/^(Squat|Développé couché|Soulevé de terre|Développé militaire) \(séries 5\/3\/1\)/.test(l)||/^(.+?) : \d+ × /.test(l)).length;
+const exCount=it=>it.filter(l=>!/^(Équilibre sur une jambe|Prévention d)/.test(l)&&/^(Squat|Développé couché|Soulevé de terre|Développé militaire) \(séries 5\/3\/1\)/.test(l)||/^(.+?) : \d+ × /.test(l)).length;
 /* Muscle d’une ligne : exercice du Guide, ou ligne libre devinée à partir de son nom */
 const FGU=[[/pompe|développé|dips|lancer/i,"pec"],[/sit-up|crunch|gainage|planche|abdo|relevé/i,"abd"],[/traction|rowing|tirage/i,"dos"],[/squat|fente|chaise|step|saut/i,"cui"],[/burpee|course|corde|sprint|montées|jumping/i,"car"],[/pont|hip thrust|fessier/i,"fes"],[/épaule|militaire|pike/i,"epa"],[/mollet/i,"mol"]];
 const lnG=l=>{const m=/^(.+?) : \d+ × /.exec(l);if(!m)return null;const x=LBN[m[1]];if(x)return KG(x.g);for(const[r,g]of FGU)if(r.test(m[1]))return g;return null};
@@ -1463,7 +1463,7 @@ q.nw=data.p&&data.p.dtest===q.dtest?(data.p.nw||0):nwOf(q.dtest,today());
 const SK=["objectif","obj2","seances","mat","prog","niveau","sexe","run30","duree","nw"],o0=data.p||{},DF={duree:75,nw:0,jours:DEFJ[o0.seances],eq:o0.mat==="salle"?[]:o0.mat==="corps"?["banc"]:["hal","elas","banc"],focus:[],bz:[]},chg=!!data.p&&(SK.some(k=>String(o0[k]??DF[k]??"")!==String(q[k]??""))||["focus","jours","eq","bz"].some(k=>String(o0[k]||DF[k])!==String(q[k]||[])));
 if(chg&&Object.values(data.done).some(Boolean)&&!confirm("Ces changements modifient la structure de ton programme : les séances cochées repartent à zéro. Ton historique, tes tests et tes charges notées sont conservés. Continuer ?"))return;
 const nb=$("#nx");if(nb.disabled)return;nb.disabled=true;const was=!!data.p;
-if(chg){if(RUN)runClose(true);data.done={};wk=0;if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>r.c==="*")}data.p=q;if(!data.start)data.start=today();if(!was&&!data.dep)data.dep=depSnap(data);editing=false;step=0;tab="a";await save();render();scrollTo(0,0);if(was)flash(chg?"Programme recalculé":"Profil mis à jour");else readyScreen()}}
+if(chg||!was)data.pid=Date.now().toString(36);if(chg){if(RUN)runClose(true);data.done={};wk=0;if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>r.c==="*")}data.p=q;if(!data.start)data.start=today();if(!was&&!data.dep)data.dep=depSnap(data);editing=false;step=0;tab="a";await save();render();scrollTo(0,0);if(was)flash(chg?"Programme recalculé":"Profil mis à jour");else readyScreen()}}
 
 const bc=t=>`<div class="bc"><span>Mon espace / ${t}</span><span class="dt">Enregistré en ligne</span></div>`;
 const IC=d=>`<svg viewBox="0 0 24 24" class="ic">${d}</svg>`;
@@ -1475,7 +1475,7 @@ let focusS=null;const OS={};
 function openSess(w,j){tab="p";wk=w;OS[w+"-"+j]=true;focusS=j;render()}
 async function newCycle(){if(!confirm("Lancer un nouveau cycle d’entraînement ? Les séances cochées repartent à zéro. Ton historique, tes tests et tes charges notées sont conservés : les charges du nouveau cycle partent de tes meilleures séries."))return;
 const L=data.lifts||{};Object.keys(L).forEach(k=>{const a=L[k];if(!a.length)return;const wl=Math.max(...a.map(e=>e.w));L[k]=a.map(e=>({...e,w:e.w===wl?-1:Math.min(e.w,-1)-100}))});
-if(RUN)runClose(true);const c=data.cyc||1;data.arch=(data.arch||[]).concat(Object.values(data.logs||{}).map(l=>({...l,c})));data.logs={};data.done={};if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>/^\*/.test(r.c));data.cyc=c+1;data.start=today();wk=0;if(data.p&&data.p.dtest)data.p.nw=nwOf(data.p.dtest,today());
+if(RUN)runClose(true);const c=data.cyc||1;data.arch=(data.arch||[]).concat(Object.values(data.logs||{}).map(l=>({...l,c})));data.logs={};data.done={};if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>/^\*/.test(r.c));data.cyc=c+1;data.pid=Date.now().toString(36);data.start=today();wk=0;if(data.p&&data.p.dtest)data.p.nw=nwOf(data.p.dtest,today());
 checkBadges(1);await save();render();scrollTo(0,0);flash("Nouveau cycle lancé")}
 function viewHome(){const{p,m,P,tot,dn}=ctx(),nx=nextS(P),cw=nx?nx[0]:P.length-1,ck=data.checks[today()],W=P[cw],cm=f1;
 const s0=new Date((data.start||today())+"T12:00:00"),e0=new Date(s0.getTime()+(P.length*7-1)*864e5),df=d=>d.toLocaleDateString("fr-BE",{day:"numeric",month:"short"});
@@ -1582,9 +1582,9 @@ A.innerHTML=`${bc("Programme")}<h2>Programme</h2>${advHTML()}<details class="car
 <div class="wk" role="tablist" aria-label="Semaines">${P.map((w,i)=>`<button role="tab" aria-selected="${i===wk}" data-w="${i}" class="${i===wk?"on":""} ${w.s.every((_,j)=>data.done[i+"-"+j])?"dn":""}">${w.s.every((_,j)=>data.done[i+"-"+j])?"✓ ":""}Semaine ${i+1}</button>`).join("")}</div>
 <div class="wh"><div><h3>${W.t}</h3><span class="bd">${wd} / ${W.s.length} faites</span></div><p class="mu wf" id="wf">${W.f}</p><button type="button" class="lk wfm" id="wfm" hidden>Lire la suite</button></div>
 <div class="tb noprint"><button id="tmb">${IC('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>')}Minuteur</button><button id="pr1">${IC('<path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/>')}Imprimer la semaine</button><button id="pr8">Imprimer les 8 semaines</button></div>
-${W.s.map((s,j)=>{const k=wk+"-"+j,d=data.done[k],op=k in OS?OS[k]:j===def,its=s.it.map((x,i)=>[x,i]),main=its.filter(([x])=>!CONS.test(x)),cs=its.filter(([x])=>CONS.test(x)),nEx=s.it.filter(x=>parseEx(x)||/^(.+?) : \d+ × /.test(x)).length;
+${W.s.map((s,j)=>{const k=wk+"-"+j,d=data.done[k],op=k in OS?OS[k]:j===def,its=s.it.map((x,i)=>[x,i]),main=its.filter(([x])=>!CONS.test(x)),cs=its.filter(([x])=>CONS.test(x)),nEx=s.it.filter(x=>!/^(Équilibre sur une jambe|Prévention d)/.test(x)&&(parseEx(x)||/^(.+?) : \d+ × /.test(x))).length;
 return`<details class="card s${d?" fait":""}" id="s-${j}" data-k="${k}"${op?" open":""}><summary class="sh"><span class="st2${justK(k)}">${IC(d?'<path d="M5 12l5 5 9-10"/>':SIC[SKIND(s)])}</span><span class="sm"><span class="mu">${s.day!=null?DJ[s.day]+" · ":""}séance ${j+1}${s.o2&&data.p.obj2?" · "+esc(OBJ[data.p.obj2].toLowerCase()):""}${d?" · faite":""}</span><b>${esc(s.nm)}</b><span class="mu">${s.d}${nEx?" · "+nEx+" exercices":""}${s.home?" · à la maison":s.mod?" · modifiée":""}</span></span>${s.it.some(modOK)&&!s.home?`<button class="edb" data-ed="${j}" aria-label="Modifier la séance" title="Modifier la séance">${IC('<path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/>')}</button>`:""}${IC('<path d="M6 9l6 6 6-6"/>')}</summary>
-${s.home||(nx&&nx[0]===wk&&nx[1]===j)?homeT(wk,j,s,OW):""}${coNote(CO.notes,wk,j)?`<p class="cco"><b>Consigne de ton coach</b>${esc(coNote(CO.notes,wk,j))}</p>`:""}<ul>${main.map(([x,i])=>itemHTML(x,i,j,OW,s.tg&&s.tg[i])).join("")}</ul>${modBar(wk,j,s)}${cs.length?`<details class="cs"><summary>Consignes : repos, intensité, progression</summary><ul>${cs.map(([x,i])=>itemHTML(x,i,j,OW)).join("")}</ul></details>`:""}
+${s.home||(nx&&nx[0]===wk&&nx[1]===j)?homeT(wk,j,s,OW):""}${coNote(CO.notes,wk,j,CO.np,data.pid)?`<p class="cco"><b>Consigne de ton coach</b>${esc(coNote(CO.notes,wk,j,CO.np,data.pid))}</p>`:""}<ul>${main.map(([x,i])=>itemHTML(x,i,j,OW,s.tg&&s.tg[i])).join("")}</ul>${modBar(wk,j,s)}${cs.length?`<details class="cs"><summary>Consignes : repos, intensité, progression</summary><ul>${cs.map(([x,i])=>itemHTML(x,i,j,OW)).join("")}</ul></details>`:""}
 <div class="sbt"><button class="${d?"o ":""}go2" data-r="${j}">${IC(ICP)}${RUN&&RUN.w===wk&&RUN.j===j&&RUN.ph!=="end"?"Reprendre la séance":d?"Refaire en guidé":"Démarrer"}</button><button class="o fin" data-l="${k}">${d?"Mon bilan":"Terminer"}</button></div></details>`}).join("")}
 ${volCard(W)}`;
 A.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{wk=+b.dataset.w;render()});
@@ -1671,7 +1671,7 @@ for(let n=1;n<=a.sets;n++)Q.push({k,set:n,r0:a.rest})}
 runRests(Q,st);return{st,Q,no,pair}}
 /* Repos après chaque série : aucun entre les deux exercices d’un superset, aucun avant une étape simple */
 function runRests(Q,st){Q.forEach((e,i)=>{const nx=Q[i+1];e.rest=!nx||st[nx.k].t!=="ex"||st[e.k].t!=="ex"||(e.m!=null&&nx.k===e.m)?0:e.r0})}
-function runOpen(w,j){acOn();if(RUN){if(RUN.w===w&&RUN.j===j&&RUN.ph!=="end"){runShow();return}if(RUN.ph!=="end"&&!confirm("Une séance est déjà en cours ("+RUN.s.nm+"). L’arrêter et commencer celle-ci ? Tes séries déjà notées sont gardées."))return;runClose(true)}const{P}=ctx(),s=P[w]&&P[w].s[j];if(!s)return;const r=runSteps(s);{const cn=coNote(CO.notes,w,j);if(cn)r.no.unshift("Consigne de ton coach : "+cn)}if(!r.Q.length)return;
+function runOpen(w,j){acOn();if(RUN){if(RUN.w===w&&RUN.j===j&&RUN.ph!=="end"){runShow();return}if(RUN.ph!=="end"&&!confirm("Une séance est déjà en cours ("+RUN.s.nm+"). L’arrêter et commencer celle-ci ? Tes séries déjà notées sont gardées."))return;runClose(true)}const{P}=ctx(),s=P[w]&&P[w].s[j];if(!s)return;const r=runSteps(s);{const cn=coNote(CO.notes,w,j,CO.np,data.pid);if(cn)r.no.unshift("Consigne de ton coach : "+cn)}if(!r.Q.length)return;
 RUN={w,j,s,...r,qi:0,t0:Date.now(),ph:"ex",re:0,rt:0,te:0,log:[],rec:[],vals:{},iv:0};runStart(true)}
 /* La séance guidée continue tant qu’elle n’est pas terminée : ✕ la réduit (bandeau en bas de l’écran),
    et son état est gardé sur le téléphone, même si l’appli est fermée ou rechargée. */
@@ -1690,7 +1690,7 @@ function runForget(){try{localStorage.removeItem(runKeyS())}catch(e){}}
 function runRestore(){if(RUN||!user||!data.p)return;let o=null;try{o=JSON.parse(localStorage.getItem(runKeyS())||"null")}catch(e){}if(!o)return;
 if(Date.now()-o.ts>12*3600e3||data.done[o.w+"-"+o.j]){runForget();return}
 let s=null;try{const{P}=ctx();s=P[o.w]&&P[o.w].s[o.j]}catch(e){}if(!s||s.nm!==o.nm){runForget();return}
-const r=runSteps(s);{const cn=coNote(CO.notes,o.w,o.j);if(cn)r.no.unshift("Consigne de ton coach : "+cn)}
+const r=runSteps(s);{const cn=coNote(CO.notes,o.w,o.j,CO.np,data.pid);if(cn)r.no.unshift("Consigne de ton coach : "+cn)}
 if(!Array.isArray(o.Q)||o.Q.some(q=>!q||!r.st[q.k])){runForget();return}
 RUN={w:o.w,j:o.j,s,...r,Q:o.Q,qi:Math.min(o.qi,o.Q.length-1),t0:o.t0,ph:o.ph==="rest"||o.ph==="end"?o.ph:"ex",re:o.re||0,rt:o.rt||0,te:0,log:o.log||[],rec:o.rec||[],vals:o.vals||{},tEnd:o.tEnd,iv:0};runStart(false)}
 /* Bandeau « séance en cours » */
@@ -1765,12 +1765,15 @@ const m0=it.map(l=>l.match(/^(.+?) : .* · environ ([\d,]+) kg( par haltère)?/)
 bw0=m0&&/barre/i.test(m0[1])&&!/poulie|haltère/i.test(m0[1])?(/EZ/i.test(m0[1])?10:p.sexe==="f"?15:20):0,wk0=v=>bw0&&v<=bw0?"barre seule":kf(v)+" kg",
 wup=m0?`puis séries d’approche sur « ${m0[1]} » : ${wk0(r25(k0*.5))} × 8, puis ${wk0(r25(k0*.75))} × 4${m0[3]||""}`:"puis 2 séries d’approche légères du premier exercice (50 % puis 75 % de la charge)";
 it[i]=it[i].replace(/puis (séries d’approche sur « .*|2 séries d’approche légères du premier exercice \(50 % puis 75 % de la charge\))$/,wup)}
-function applyMods(P,p,H,M,C){if(M===undefined)M=data.mods;if(C===undefined)C=typeof CO!=="undefined"&&CO&&Array.isArray(CO.mods)?CO.mods:[];M=Array.isArray(M)?M:[];C=Array.isArray(C)?C:[];if(!M.length&&!C.length)return P;
+/* Les changements du coach valent pour UN programme : pid = identifiant du programme du client (nouveau à chaque profil
+   recalculé ou nouveau cycle). Un changement fait pour un ancien programme ne s’applique plus. "0" = avant ce système. */
+const coOK=(r,pid)=>!!r&&String(r.pid||"0")===String(pid||"0");
+function applyMods(P,p,H,M,C){if(M===undefined)M=data.mods;if(C===undefined)C=typeof CO!=="undefined"&&CO&&Array.isArray(CO.mods)?CO.mods.filter(r=>coOK(r,data.pid)):[];M=Array.isArray(M)?M:[];C=Array.isArray(C)?C:[];if(!M.length&&!C.length)return P;
 P.forEach((W,wi)=>{const ow=W.ow??wi;W.s=W.s.map((s,j)=>{const k=wi+"-"+j,sc=r=>r&&(r.c==="*"||r.c==="*-"+j||r.c===k),all=M.filter(sc).map(r=>[r,0]).concat(C.filter(sc).map(r=>[r,1])),hm=all.some(([r])=>r.t==="home"&&r.c===k),s1=modS(s,all.filter(([r])=>r.t!=="home"),ow,p,H);return hm?homeS(s1,p,ow):s1})});return P}
 /* Lignes d’exercice que le coach peut remplacer, retirer ou déplacer : les exercices du Guide, mais aussi les lignes
 « libres » (renforcement pour le test, pompes pyramidales, course…). Échauffement, retour au calme et consignes restent fixes.
 La clé d’une ligne : le nom de l’exercice, ou le texte avant « : », ou le début de la ligne avant le premier chiffre. */
-const FIXL=/^(Échauffement|Retour au calme|Repos|Intensité|Technique de la semaine|Progression|Choisis la|Format |Si tu atteins|Training Max|À la maison|Note tes|Bois |Option)/;
+const FIXL=/^(Échauffement|Équilibre sur une jambe|Prévention d|Retour au calme|Repos|Intensité|Technique de la semaine|Progression|Choisis la|Format |Si tu atteins|Training Max|À la maison|Note tes|Bois |Option)/;
 const lnKey=l=>{l=String(l);const e=exNm(l);if(e)return e;if(FIXL.test(l))return null;const m=/^(.+?) : /.exec(l);if(m)return m[1];const k=l.replace(/\s*[\d(].*$/,"").trim();return k.length>=3?k:l};
 const lnFree=l=>!!lnKey(l)&&!/\(séries 5\/3\/1\)/.test(l);
 /* Règles du client et du coach sur une séance (remplacer, retirer, ajouter, ordre) */
@@ -1799,7 +1802,7 @@ function candOf(g,p,skip){const bar=p.mat!=="salle"&&Array.isArray(p.eq)&&p.eq.i
 return a.filter(x=>exOK(x,p)&&!skip.includes(x.n)&&!(li&&JUMP.test(x.n)))}
 const TYP=x=>x.c>0?"polyarticulaire":"isolation";
 /* Consigne du coach pour une séance (semaine w, séance j) */
-const coNote=(N,w,j)=>{N=N||{};return N[w+"-"+j]||N["*-"+j]||""};
+const coNote=(N,w,j,NP,pid)=>{N=N||{};NP=NP||{};const ok=k=>N[k]&&String(NP[k]||"0")===String(pid||"0");return ok(w+"-"+j)?N[w+"-"+j]:ok("*-"+j)?N["*-"+j]:""};
 const modTx=r=>r.t==="ord"?"Ordre des exercices changé":r.t==="home"?"Séance faite à la maison, sans matériel":r.t==="sw"?`${r.a} → ${r.b}`:r.t==="rm"?`${r.a} retiré`:`${r.b} ajouté (${r.s} séries)`;
 const modSc=r=>r.c==="*"?"partout":/^\*-/.test(r.c)?"chaque semaine, séance "+(+r.c.slice(2)+1):"une seule séance";
 /* ---------- Séance à la maison, sans matériel ----------
