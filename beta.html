@@ -1447,7 +1447,7 @@ q.nw=data.p&&data.p.dtest===q.dtest?(data.p.nw||0):nwOf(q.dtest,today());
 const SK=["objectif","obj2","seances","mat","prog","niveau","sexe","run30","duree","nw"],o0=data.p||{},DF={duree:75,nw:0,jours:DEFJ[o0.seances],eq:o0.mat==="salle"?[]:o0.mat==="corps"?["banc"]:["hal","elas","banc"],focus:[],bz:[]},chg=!!data.p&&(SK.some(k=>String(o0[k]??DF[k]??"")!==String(q[k]??""))||["focus","jours","eq","bz"].some(k=>String(o0[k]||DF[k])!==String(q[k]||[])));
 if(chg&&Object.values(data.done).some(Boolean)&&!confirm("Ces changements modifient la structure de ton programme : les séances cochées repartent à zéro. Ton historique, tes tests et tes charges notées sont conservés. Continuer ?"))return;
 const nb=$("#nx");if(nb.disabled)return;nb.disabled=true;const was=!!data.p;
-if(chg){data.done={};wk=0;if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>r.c==="*")}data.p=q;if(!data.start)data.start=today();if(!was&&!data.dep)data.dep=depSnap(data);editing=false;step=0;tab="a";await save();render();scrollTo(0,0);if(was)flash(chg?"Programme recalculé":"Profil mis à jour");else readyScreen()}}
+if(chg){if(RUN)runClose(true);data.done={};wk=0;if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>r.c==="*")}data.p=q;if(!data.start)data.start=today();if(!was&&!data.dep)data.dep=depSnap(data);editing=false;step=0;tab="a";await save();render();scrollTo(0,0);if(was)flash(chg?"Programme recalculé":"Profil mis à jour");else readyScreen()}}
 
 const bc=t=>`<div class="bc"><span>Mon espace / ${t}</span><span class="dt">Enregistré en ligne</span></div>`;
 const IC=d=>`<svg viewBox="0 0 24 24" class="ic">${d}</svg>`;
@@ -1459,7 +1459,7 @@ let focusS=null;const OS={};
 function openSess(w,j){tab="p";wk=w;OS[w+"-"+j]=true;focusS=j;render()}
 async function newCycle(){if(!confirm("Lancer un nouveau cycle d’entraînement ? Les séances cochées repartent à zéro. Ton historique, tes tests et tes charges notées sont conservés : les charges du nouveau cycle partent de tes meilleures séries."))return;
 const L=data.lifts||{};Object.keys(L).forEach(k=>{const a=L[k];if(!a.length)return;const wl=Math.max(...a.map(e=>e.w));L[k]=a.map(e=>({...e,w:e.w===wl?-1:Math.min(e.w,-1)-100}))});
-const c=data.cyc||1;data.arch=(data.arch||[]).concat(Object.values(data.logs||{}).map(l=>({...l,c})));data.logs={};data.done={};if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>/^\*/.test(r.c));data.cyc=c+1;data.start=today();wk=0;if(data.p&&data.p.dtest)data.p.nw=nwOf(data.p.dtest,today());
+if(RUN)runClose(true);const c=data.cyc||1;data.arch=(data.arch||[]).concat(Object.values(data.logs||{}).map(l=>({...l,c})));data.logs={};data.done={};if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>/^\*/.test(r.c));data.cyc=c+1;data.start=today();wk=0;if(data.p&&data.p.dtest)data.p.nw=nwOf(data.p.dtest,today());
 checkBadges(1);await save();render();scrollTo(0,0);flash("Nouveau cycle lancé")}
 function viewHome(){const{p,m,P,tot,dn}=ctx(),nx=nextS(P),cw=nx?nx[0]:P.length-1,ck=data.checks[today()],W=P[cw],cm=f1;
 const s0=new Date((data.start||today())+"T12:00:00"),e0=new Date(s0.getTime()+(P.length*7-1)*864e5),df=d=>d.toLocaleDateString("fr-BE",{day:"numeric",month:"short"});
@@ -1967,7 +1967,7 @@ function depHTML(d,esc,moi){const{s,rows}=depRows(d),p=d.p||{},pv=dpNum(p.pv),dt
 return`<p class="mu" style="margin:0 0 10px">${s.recon?"Reconstitué à partir des premières valeurs notées":"Fixé"}${ds?" le "+esc(ds):""}${pv?" · poids visé : <b>"+esc(dpN(pv))+" kg</b>":""}</p>
 ${rows.length?`<div class="dpt" role="table"><div class="dph" role="row"><span></span><span>Départ</span><span>${moi?"Aujourd’hui":"Actuel"}</span><span>Écart</span></div>${rows.map(r=>`<div role="row"><span>${esc(r[0])}</span><span>${esc(r[1])}</span><span>${esc(r[2])}</span><span class="${r[4]>0?"up":r[4]<0?"dn":""}">${esc(r[3])}</span></div>`).join("")}</div>`:`<p class="mu">Pas encore de mesure de départ.${moi?" Ajoute ton poids dans « Mon corps » : ce sera ton point de départ.":""}</p>`}`}
 /* Séance terminée : cochée tout de suite (le bilan qui suit est facultatif ; « interrompue » la décoche) */
-function markDone(k){if(data.done[k])return false;data.done[k]=true;JUST=k;setTimeout(()=>{JUST=null},1600);checkBadges(1);save();return true}
+function markDone(k){if(data.done[k])return false;if(RUN&&RUN.w+"-"+RUN.j===k&&RUN.ph!=="end")runClose(true);data.done[k]=true;JUST=k;setTimeout(()=>{JUST=null},1600);checkBadges(1);save();return true}
 function openLog(k,fin){const{P}=ctx(),[w,j]=k.split("-"),s=P[w].s[j],o=data.logs[k]||{};if(fin&&markDone(k)){render();flash("Séance terminée, bravo")}
 const op=(a,v)=>'<option value="">Choisir…</option>'+a.map(([x,t])=>`<option value="${x}"${o[v]===x?" selected":""}>${t}</option>`).join("");
 modal(`<h3>${esc(s.nm)}</h3>${data.done[k]&&!data.logs[k]?`<p class="mu" style="margin:0 0 6px">Séance cochée ✓. Ton bilan est facultatif, mais il aide l’appli à ajuster la suite.</p>`:""}<form id="fg"><label class="f">Difficulté ressentie<select name="rpe" required>${op([["2","2 – Très facile"],["4","4 – Facile"],["6","6 – Modérée"],["7","7 – Soutenue, contrôlée"],["8","8 – Difficile"],["9","9 – Très difficile"],["10","10 – Maximale"]],"rpe")}</select></label>
@@ -2001,12 +2001,16 @@ return TS[p.objectif].map(([k,t,y])=>y?chart(t,(k==="f"&&p.t2400&&tsec(p.t2400)?
 +chart("Effort ressenti par séance (sur 10)",lg,R,sg,1,1)}
 const BF=[["poids","Poids (kg)"],["mg","Taux de masse grasse connu (%)"],["mm","Masse musculaire (kg), si ta balance l’indique"],["cou","Tour de cou (cm)"],["ta","Tour de taille (cm)"],["hanc","Tour de hanches (cm)"],["poit","Tour de poitrine (cm)"],["bras","Tour de bras (cm)"],["cuisse","Tour de cuisse (cm)"]];
 function openBody(){const l=(data.body||[]).slice(-1)[0]||{};
-modal(`<h3>Mes mesures</h3><p class="mu">Remplis ce que tu as mesuré aujourd’hui, laisse le reste vide. Pèse-toi le matin, à jeun, et mesure-toi toujours au même endroit.</p><form id="fb"><div class="g">${BF.map(([k,t])=>fld(t,k,"",{h:l[k]>0?"Dernière valeur : "+String(l[k]).replace(".",","):""})).join("")}</div><p id="eb" style="color:var(--er)"></p><div class="row"><button type="submit">Enregistrer</button></div></form>`);
+modal(`<h3>Mes mesures</h3><p class="mu">Remplis ce que tu as mesuré aujourd’hui, laisse le reste vide. Pèse-toi le matin, à jeun, et mesure-toi toujours au même endroit.</p><form id="fb"><div class="g">${BF.map(([k,t])=>fld(t,k,"",{h:l[k]>0?"Dernière valeur : "+String(l[k]).replace(".",","):""})).join("")}</div><p id="eb" style="color:var(--er)"></p><div class="row"><button type="submit">Enregistrer</button></div></form>${(data.body||[]).length?`<p style="margin:14px 0 0"><button type="button" class="lk dgk" id="bdl">Supprimer ma dernière mesure (${esc((data.body||[]).slice(-1)[0].d||"")})</button></p>`:""}`);
+const bd=$("#bdl");if(bd)bd.onclick=async()=>{if(!confirm("Supprimer ta dernière mesure ? Utile si tu t’es trompé en la notant."))return;data.body=(data.body||[]).slice(0,-1);await save();dg.close();render();flash("Mesure supprimée")};
 $("#fb").onsubmit=async ev=>{ev.preventDefault();const f=ev.target,e={d:new Date().toLocaleDateString("fr-BE")};let n=0;
 for(const[k]of BF){const v=parseFloat(String(f[k].value).replace(",","."));if(v>0){e[k]=v;n++}}
 if(!n){$("#eb").textContent="Saisis au moins une mesure.";return}
 if(e.poids&&(e.poids<30||e.poids>250)){$("#eb").textContent="Poids invalide.";return}
 if(e.mg&&(e.mg<3||e.mg>60)){$("#eb").textContent="Taux de masse grasse invalide.";return}
+if(e.mm&&(e.mm<10||e.mm>=(e.poids||(data.p||{}).poids||250))){$("#eb").textContent="Masse musculaire invalide.";return}
+{const L={cou:[20,70],ta:[40,200],hanc:[50,200],poit:[50,200],bras:[15,70],cuisse:[25,110]},k=Object.keys(L).find(k=>e[k]&&(e[k]<L[k][0]||e[k]>L[k][1]));if(k){$("#eb").textContent=BF.find(x=>x[0]===k)[1].replace(/ \(cm\)$/,"")+" : valeur invalide (en cm).";return}}
+if(e.ta&&e.cou&&e.ta<=e.cou){$("#eb").textContent="Le tour de taille doit être plus grand que le tour de cou : vérifie tes deux mesures.";return}
 const sb=f.querySelector("[type=submit]");if(sb.disabled)return;sb.disabled=true;data.body=(data.body||[]).concat([e]);await save();dg.close();render();flash("Mesures enregistrées")}}
 function bodyCharts(){const{p}=ctx(),B=data.body||[],dfm=inv=>{const f=v=>(v>0?"+":"−")+f1(Math.abs(v));f.inv=inv;return f},dd=e=>e.d.slice(0,5);
 const ser=(k,s0)=>{const o=s0>0?[["Départ",s0]]:[];B.forEach(e=>{if(e[k]>0)o.push([dd(e),e[k]])});return o};
@@ -2048,7 +2052,8 @@ return`<section id="ep" class="anc"><h3 style="margin-top:28px">Mes épreuves</h
 ${T.length?`<div class="card" style="overflow-x:auto"><table><tr><th>Date</th>${F.map(([,t])=>`<th>${t}</th>`).join("")}</tr>${T.map(t=>`<tr><td>${esc(t.d)}</td>${F.map(([k])=>`<td>${esc(t[k])}</td>`).join("")}</tr>`).join("")}</table></div><p><button class="o" id="dtl">Supprimer le dernier test</button></p>`:""}</section>`}
 function epBind(){const F=TS[data.p.objectif],keep=()=>{const y=scrollY;render();scrollTo(0,y)};
 $("#ft").onsubmit=async ev=>{ev.preventDefault();const f=ev.target;if(F.some(([k,,y])=>y&&f[k].value&&!tsec(f[k].value))){flash("Temps : écris-le comme 11:30");return}
-if(!F.some(([k])=>String(f[k].value).trim())){flash("Remplis au moins un résultat");return}const sb=f.querySelector("[type=submit]");if(sb.disabled)return;sb.disabled=true;const r={d:new Date().toLocaleDateString("fr-BE")};F.forEach(([k])=>r[k]=String(f[k].value).trim());data.tests.push(r);checkBadges(1);await save();render();const e=$("#ep");if(e)e.scrollIntoView({block:"start"});flash("Test ajouté")};
+if(!F.some(([k])=>String(f[k].value).trim())){flash("Remplis au moins un résultat");return}
+if(F.some(([k,,y])=>{const v=String(f[k].value).trim();if(!v||y)return false;const n=parseFloat(v.replace(",","."));return!(n>=0&&n<10000)||!/^\d+([.,]\d+)?$/.test(v)})){flash("Résultat invalide : écris seulement un nombre");return}const sb=f.querySelector("[type=submit]");if(sb.disabled)return;sb.disabled=true;const r={d:new Date().toLocaleDateString("fr-BE")};F.forEach(([k])=>r[k]=String(f[k].value).trim());data.tests.push(r);checkBadges(1);await save();render();const e=$("#ep");if(e)e.scrollIntoView({block:"start"});flash("Test ajouté")};
 const dt=$("#dtl");if(dt)dt.onclick=async()=>{if(!confirm("Supprimer le dernier test enregistré ?"))return;const i=data.tests.map(t=>F.some(([k])=>t[k])).lastIndexOf(true);if(i>=0){data.tests.splice(i,1);await save();keep()}}}
 /* Ancien onglet Épreuves : renvoie vers la partie Épreuves de Suivi */
 function viewEp(){tab="s";$("#nv").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t==="s"));viewTrack();setTimeout(()=>{const e=$("#ep");if(e)e.scrollIntoView({block:"start"})},0)}
