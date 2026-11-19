@@ -1525,7 +1525,7 @@ ${H.length?`<div class="res">Maximum estimé (1RM) : <b>${f1(best)} kg</b><br><s
 <p class="mu">À partir de la semaine suivante, l’appli règle tes charges sur ta meilleure série, avec la marge de répétitions prévue au programme.</p>`);
 $("#fn").onsubmit=async ev=>{ev.preventDefault();const f=ev.target,kg=parseFloat(String(f.kg.value).replace(",",".")),rp=parseInt(f.reps.value),rir=parseInt(f.rir.value),er=t=>$("#en").textContent=t;
 if(!(kg>0&&kg<=600)){er("Charge invalide (en kg).");return}
-if(!(rp>=1&&rp<=20)){er("Répétitions : entre 1 et 20.");return}
+if(!(rp>=1&&rp<=50)){er("Répétitions : entre 1 et 50.");return}
 if(!(rir>=0&&rir<=4)){er("Indique la marge qu’il te restait.");return}
 const sb=f.querySelector("[type=submit]");if(sb.disabled)return;sb.disabled=true;const r=addSet(e.key,w,kg,rp,rir);checkBadges(1);
 await save();render();openLift(w,j,i);if(r.rec)celebrate("Nouveau record !",`${e.key} : maximum estimé ≈ ${f1(r.e1)} kg (+${f1(r.e1-r.prev)} kg)`,0,ICS);else flash("Série enregistrée")};
