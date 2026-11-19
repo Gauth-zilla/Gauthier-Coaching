@@ -550,6 +550,15 @@ body.running #rmini{display:none}
 @media(max-width:640px),(pointer:coarse) and (max-width:860px){#rmini{left:10px;right:10px;width:auto;bottom:calc(76px + env(safe-area-inset-bottom))}}
 @media(prefers-reduced-motion:reduce){#rmini,#rmini .dot{animation:none}}
 @media print{#rmini{display:none!important}}
+
+/* Programme plus compact sur téléphone : séances visibles plus vite */
+.wfm{display:none}
+@media(max-width:640px),(pointer:coarse) and (max-width:860px){
+.wf{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.wf.open{display:block}
+.wfm{display:inline;padding:2px 0;min-height:0;margin-top:2px;font-size:.88rem}.wfm[hidden]{display:none}
+#pr1,#pr8{display:none}.tb{margin:10px 0 2px}
+details.meth{padding-top:12px;padding-bottom:12px}.meth>summary{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 10px}.meth>summary b{font-size:1.02rem}.meth>summary:after{width:100%;font-size:.8rem}
+}
 </style>
 </head>
 <body>
@@ -1564,7 +1573,7 @@ function viewProg(){const{P}=ctx();if(wk>=P.length)wk=P.length-1;const W=P[wk],O
 const def=nx&&nx[0]===wk?nx[1]:W.s.findIndex((_,j)=>!data.done[wk+"-"+j]);
 A.innerHTML=`${bc("Programme")}<h2>Programme</h2>${advHTML()}<details class="card meth"><summary><span class="ey">Ta méthode</span><b>${esc(M.nm)}</b></summary><p class="mu" style="margin:10px 0 8px">${esc(M.in)}</p><p style="margin:0">${esc(M.ds)}</p></details>
 <div class="wk" role="tablist" aria-label="Semaines">${P.map((w,i)=>`<button role="tab" aria-selected="${i===wk}" data-w="${i}" class="${i===wk?"on":""} ${w.s.every((_,j)=>data.done[i+"-"+j])?"dn":""}">${w.s.every((_,j)=>data.done[i+"-"+j])?"✓ ":""}Semaine ${i+1}</button>`).join("")}</div>
-<div class="wh"><div><h3>${W.t}</h3><span class="bd">${wd} / ${W.s.length} faites</span></div><p class="mu">${W.f}</p></div>
+<div class="wh"><div><h3>${W.t}</h3><span class="bd">${wd} / ${W.s.length} faites</span></div><p class="mu wf" id="wf">${W.f}</p><button type="button" class="lk wfm" id="wfm" hidden>Lire la suite</button></div>
 <div class="tb noprint"><button id="tmb">${IC('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>')}Minuteur</button><button id="pr1">${IC('<path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/>')}Imprimer la semaine</button><button id="pr8">Imprimer les 8 semaines</button></div>
 ${W.s.map((s,j)=>{const k=wk+"-"+j,d=data.done[k],op=k in OS?OS[k]:j===def,its=s.it.map((x,i)=>[x,i]),main=its.filter(([x])=>!CONS.test(x)),cs=its.filter(([x])=>CONS.test(x)),nEx=s.it.filter(x=>parseEx(x)||/^(.+?) : \d+ × /.test(x)).length;
 return`<details class="card s${d?" fait":""}" id="s-${j}" data-k="${k}"${op?" open":""}><summary class="sh"><span class="st2${justK(k)}">${IC(d?'<path d="M5 12l5 5 9-10"/>':SIC[SKIND(s)])}</span><span class="sm"><span class="mu">${s.day!=null?DJ[s.day]+" · ":""}séance ${j+1}${s.o2&&data.p.obj2?" · "+esc(OBJ[data.p.obj2].toLowerCase()):""}${d?" · faite":""}</span><b>${esc(s.nm)}</b><span class="mu">${s.d}${nEx?" · "+nEx+" exercices":""}${s.home?" · à la maison":s.mod?" · modifiée":""}</span></span>${s.it.some(modOK)&&!s.home?`<button class="edb" data-ed="${j}" aria-label="Modifier la séance" title="Modifier la séance">${IC('<path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/>')}</button>`:""}${IC('<path d="M6 9l6 6 6-6"/>')}</summary>
@@ -1578,6 +1587,7 @@ A.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{const[j,i]=b.dataset.n.
 A.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>openLog(b.dataset.l,!data.done[b.dataset.l]));
 A.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>runOpen(wk,+b.dataset.r));modBind(wk);homeBind(A);
 const wb=A.querySelector(".wk"),on=wb.querySelector(".on");if(on)wb.scrollLeft=on.offsetLeft-wb.clientWidth/2+on.clientWidth/2;
+{const f=$("#wf"),m=$("#wfm");if(f&&m){m.hidden=!(f.scrollHeight>f.clientHeight+2);m.onclick=()=>{const o=f.classList.toggle("open");m.textContent=o?"Réduire":"Lire la suite"}}}
 tmInit();$("#tmb").onclick=tmOpen;$("#pr8").onclick=printAll;
 $("#pr1").onclick=()=>{const ds=[...A.querySelectorAll("details")],o=ds.map(d=>d.open);ds.forEach(d=>d.open=true);print();ds.forEach((d,i)=>d.open=o[i])};
 if(focusS!=null){const e=$("#s-"+focusS);focusS=null;if(e)setTimeout(()=>e.scrollIntoView({block:"start"}),0)}}
@@ -2195,6 +2205,8 @@ unsub.push(onSnapshot(doc(db,"coach",u.uid),s=>{if(user!==u||(s.metadata&&s.meta
 /* Revenir sur l’appli redessine l’écran si une mise à jour est arrivée pendant une fenêtre ouverte */
 document.addEventListener("visibilitychange",()=>{if(stale&&document.visibilityState==="visible"&&user&&data.p&&live()){stale=false;render()}});
 try{$("#dg").addEventListener("close",()=>{if(stale&&user&&data.p&&live()){stale=false;render()}})}catch(e){}
+/* Ouverture sans réseau : sw.js garde une copie de l’appli sur le téléphone (voir sw.js). Seulement en ligne (https) ou en test local. */
+try{if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){const sw=()=>navigator.serviceWorker.register("sw.js").catch(()=>{});document.readyState==="complete"?sw():addEventListener("load",sw)}}catch(e){}
 </script>
 </body>
 </html>
