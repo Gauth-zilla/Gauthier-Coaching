@@ -509,6 +509,18 @@ details.mx{margin-top:12px;border:1px solid var(--ln);border-radius:14px;padding
 .mtg.mco{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
 .cco{margin:0 20px 10px;padding:10px 12px;border-radius:12px;border:1px solid color-mix(in srgb,var(--ok) 40%,var(--ln));background:color-mix(in srgb,var(--ok) 8%,transparent);font-size:.92rem}.cco b{display:block;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--ok);margin-bottom:2px}
 @media(max-width:560px){.cco{margin:0 16px 10px}}
+
+/* Interrupteur « À la maison aujourd’hui » */
+.hmt{display:flex;align-items:center;gap:12px;margin:14px 0 4px;padding:12px 14px;border:1px solid var(--ln);border-radius:14px;background:var(--p2);cursor:pointer;max-width:460px}
+.hmt input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.hmt .sw{flex:none;width:42px;height:24px;border-radius:12px;background:var(--ln);position:relative;transition:background .2s}
+.hmt .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--ink);transition:transform .2s}
+.hmt input:checked+.sw{background:var(--ac)}.hmt input:checked+.sw::after{transform:translateX(18px);background:var(--on)}
+.hmt input:focus-visible+.sw{outline:2px solid var(--ac);outline-offset:2px}
+.hmt .hmx{display:flex;flex-direction:column;line-height:1.3}.hmt .hmx b{font-size:.95rem}.hmt .hmx small{color:var(--mu);font-size:.82rem}
+details.s .hmt{margin:4px 0 12px}
+@media (prefers-reduced-motion:reduce){.hmt .sw,.hmt .sw::after{transition:none}}
+@media print{.hmt{display:none!important}}
 </style>
 </head>
 <body>
@@ -1194,6 +1206,56 @@ const PROG=[["Pompes",["Pompes murales","Pompes mains sur une table","Pompes sur
 ["Poussée verticale et dips",["Pompes pike","Pompes pike pieds surélevés","Appui renversé contre le mur (poirier)","Dips sur chaise","Dips aux barres"]],
 ["Gainage",["Planche sur les genoux","Planche","Planche pieds surélevés","Roue abdominale à genoux","Roue abdominale debout"]]];
 const fk=x=>String(R(x*100)/100).replace(".",",");
+/* ---------- Deux objectifs (programme hybride) ----------
+Couche posée par-dessus le moteur : gen() n’est pas modifié. Chaque partie du programme est produite par gen(),
+exactement comme pour une personne qui n’aurait que cet objectif, avec moins de séances. On réunit ensuite les séances
+de la semaine et on les replace sur les jours. Sans deuxième objectif, genH() rend exactement gen().
+Règles (entraînement combiné, Wilson 2012, Schumann 2022) :
+- l’objectif principal garde la majorité des séances : 3 → 2 + 1, 4 → 3 + 1, 5 → 3 + 2 ;
+- seulement des paires compatibles, à partir de 3 séances par semaine ;
+- pas de course difficile la veille ou le lendemain d’une grosse séance de jambes quand les jours le permettent. */
+const HY2={hypertrophie:["endurance","cardio"],force:["endurance","cardio"],perte:["endurance"],forme:["hypertrophie"],endurance:["hypertrophie","force"],cardio:["hypertrophie","force"]};
+const HYS={3:[2,1],4:[3,1],5:[3,2]};
+const hySplit=n=>HYS[n]||null;
+const hyOn=p=>!!(p&&p.obj2&&(HY2[p.objectif]||[]).includes(p.obj2)&&HYS[p.seances]);
+const RUNH=/^(Fractionné|Côtes|Course au seuil|Intervalles|Pyramide|Simulation|Vitesse|Fartlek|Course progressive|Sortie longue|Test blanc)/;
+const RUNA=/^(Fractionné|Côtes|Course|Intervalles|Pyramide|Simulation|Vitesse|Fartlek|Sortie longue|Footing|Marche|Cross-training|Test blanc)/;
+/* Ce que fait la séance du deuxième objectif quand il n’en a qu’une par semaine */
+const HYW={endurance:"Une semaine sur deux, une sortie longue ; l’autre semaine, une séance de qualité (seuil, côtes ou intervalles).",cardio:"Chaque semaine, une séance de fractionné : c’est elle qui fait le plus progresser la VO2max (Helgerud 2007).",hypertrophie:"Deux séances complètes en alternance, une par semaine : chaque muscle garde un stimulus régulier.",force:"Deux séances de force en alternance (A puis B), comme dans StrongLifts 5×5."};
+/* Muscles sollicités par une séance de musculation : U haut du corps, L bas du corps */
+const ZU=/^(Haut du corps|Pectoraux|Poussée|Tirage|Dos et biceps|Épaules et abdos|Épaules, bras|Bras et mollets|Force 5\/3\/1 : développé)/,ZL=/^(Bas du corps|Jambes|Fessiers|Force 5\/3\/1 : (squat|soulevé))/;
+function hySched(W,p){const n=W.s.length,own=Array.isArray(p.jours)&&p.jours.length===n,days=(own?p.jours:DEFJ[n]||[...Array(n).keys()]).map(Number).sort((a,b)=>a-b);
+const run=s=>RUNA.test(s.nm),rh=s=>RUNH.test(s.nm)&&run(s),ez=s=>EASY.test(s.nm)||/^Marche lestée/.test(s.nm),
+zn=s=>run(s)||ez(s)||/^Circuit/.test(s.nm)?"":ZU.test(s.nm)?"U":ZL.test(s.nm)?"L":"UL",hard=s=>rh(s)||HARD.test(s.nm);
+/* Coût d’une suite de jours : mêmes muscles deux jours de suite (le plus à éviter ; un circuit léger ne compte pas), deux séances dures de suite, jambes lourdes collées à une course difficile */
+const cost=o=>{let c=0;for(let k=0;k<n;k++){const a=W.s[o[k]],b=W.s[o[(k+1)%n]],gap=k<n-1?days[k+1]-days[k]:days[0]+7-days[n-1];
+if(n>1&&gap===1){const za=zn(a),zb=zn(b);if(za&&zb){if(za.includes("L")&&zb.includes("L"))c+=8;else if(za.includes("U")&&zb.includes("U"))c+=5;else c+=.5}
+if(hard(a)&&hard(b))c+=5;else if(hard(a)!==hard(b)&&!ez(a)&&!ez(b))c+=1;
+if((za.includes("L")&&rh(b))||(rh(a)&&zb.includes("L")))c+=2}}
+o.forEach((i,k)=>{const s=W.s[i];if(/^Sortie longue/.test(s.nm)&&days.some(d=>d>=5)&&days[k]<5)c+=.8;if(/^Test blanc/.test(s.nm)&&k!==n-1)c+=3;c+=Math.abs(i-k)*.01});return c};
+let best=null,bc=1e9;const perm=(a,l)=>{if(l===n){const c=cost(a);if(c<bc){bc=c;best=a.slice()}return}for(let i=l;i<n;i++){[a[l],a[i]]=[a[i],a[l]];perm(a,l+1);[a[l],a[i]]=[a[i],a[l]]}};
+perm([...Array(n).keys()],0);W.s=best.map((i,k)=>({...W.s[i],day:days[k]}))}
+/* Deux séances de musculation qui travaillent les mêmes muscles deux jours de suite */
+function hyClash(P){let c=0;P.forEach(W=>{const s=W.s.slice().sort((a,b)=>a.day-b.day),n=s.length;for(let k=0;k<n;k++){const a=s[k],b=s[(k+1)%n],gap=k<n-1?b.day-a.day:s[0].day+7-a.day;
+if(n>1&&gap===1){const z=x=>RUNA.test(x.nm)||EASY.test(x.nm)||/^(Marche lestée|Circuit)/.test(x.nm)?"":ZU.test(x.nm)?"U":ZL.test(x.nm)?"L":"UL",za=z(a),zb=z(b);if(za&&zb&&(za.includes("L")&&zb.includes("L")||za.includes("U")&&zb.includes("U")))c++}}});return c}
+/* Méthodes de rechange quand la méthode automatique obligerait à travailler les mêmes muscles deux jours de suite */
+const HYALT={hypertrophie:{h:["ul","ppl"],f:["wul","ul"]},perte:{h:["ul"],f:["ul"]},forme:{h:["ul"],f:["wul","ul"]},force:{h:["ulf"],f:["ulf"]}};
+function hyBuild(p,T,H,prog){const[nP,nS]=HYS[p.seances],o2=p.obj2,q={...p,jours:undefined};
+const A=gen({...q,seances:nP,prog},T,H);
+const B=gen({...q,objectif:o2,seances:Math.max(2,nS),prog:o2==="force"&&nS<2?"fbf":"auto",dtest:"",focus:o2==="hypertrophie"?p.focus:[]},T,H);
+const isT=s=>/^Test blanc/.test(s.nm),light=B.find(x=>x.ow===3);
+const out=A.map((W,i)=>{const ow=W.ow??i,Bw=B[i];let s2;
+if(nS===1){let k=o2==="cardio"?0:ow%2;if(isT(Bw.s[k]))k=1-k;s2=[Bw.s[k]]}
+else s2=Bw.s.map((s,k)=>isT(s)?(light||B[Math.max(0,i-1)]).s[k]:s);
+const X={...W,s:W.s.map(s=>({...s})).concat(s2.map(s=>({...s,o2:1}))),f:W.f+" Deuxième objectif ("+OBJ[o2].toLowerCase()+") : "+nS+" séance"+(nS>1?"s":"")+" cette semaine."};
+hySched(X,p);return X});out.A=A;return out}
+function genH(p,T,H){if(!hyOn(p))return gen(p,T,H);
+const[nP,nS]=HYS[p.seances],o2=p.obj2,auto=!p.prog||p.prog==="auto",alt=auto&&HYALT[p.objectif]?HYALT[p.objectif][p.sexe==="f"?"f":"h"].filter(id=>METH[id]&&METH[id].plan[nP]&&progOpts(p.objectif,nP,p.mat,p.sexe).some(x=>x[0]===id)):[];
+let out=hyBuild(p,T,H,p.prog||"auto"),sw=false,c0=hyClash(out);
+for(const id of alt){if(!c0)break;const o=hyBuild(p,T,H,id),c=hyClash(o);if(c<c0){out=o;c0=c;sw=true}}
+const A=out.A;delete out.A;
+out.meta={nm:A.meta.nm+" + "+OBJ[o2].toLowerCase(),in:A.meta.in,ds:A.meta.ds+" Deuxième objectif : "+OBJ[o2].toLowerCase()+", "+nS+" séance"+(nS>1?"s":"")+" sur "+p.seances+", programmée"+(nS>1?"s":"")+" comme pour quelqu’un qui n’a que cet objectif. "+(nS===1?HYW[o2]+" ":"")+"L’objectif principal garde la majorité des séances : c’est ce qui limite l’interférence entre course et musculation (Wilson 2012)."+(sw?" Tes jours d’entraînement se suivent : la musculation est donc répartie entre haut et bas du corps, pour qu’un même muscle ne soit jamais travaillé deux jours de suite.":"")+" Les séances sont placées pour éviter, autant que tes jours le permettent, une course difficile la veille ou le lendemain d’une grosse séance de jambes."+(c0?" Attention : avec tes jours et la méthode choisie, deux séances qui travaillent les mêmes muscles tombent des jours qui se suivent. Le choix automatique de la méthode l’évite.":"")};
+return out}
 
 /* ---------- Vues ---------- */
 const SANTE=["Douleur ou gêne dans la poitrine à l’effort","Vertiges ou malaises à l’effort","Problème cardiaque ou tension artérielle élevée connue","Douleur articulaire ou blessure récente (genou, dos, épaule, cheville)","Asthme ou problème respiratoire non contrôlé","Grossesse ou accouchement récent","Traitement médical qui limite l’effort"];
@@ -1264,7 +1326,7 @@ const G=[
 [/soulevé|pont fessier|mollets/,"Soulevé roumain, pont fessier, mollets","Soulevé : dos plat, genoux légèrement fléchis, bassin vers l’arrière.|Pont : serre les fessiers en haut.|Mollets : monte lentement sur la pointe des pieds.","Dos arrondi sur le soulevé.","Charge légère, amplitude réduite.","Fais l’exercice sur une jambe."]];
 const NIV=["Débutant","Intermédiaire","Avancé"];
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
-const ctx=()=>{const p=data.p,b=(data.body||[]).slice(-1)[0],P=applyMods(gen(p,data.tests,data.lifts),p,data.lifts),m=calc(p,b);return{p,m,P,tot:P.reduce((a,w)=>a+w.s.length,0),dn:Object.values(data.done).filter(Boolean).length}};
+const ctx=()=>{const p=data.p,b=(data.body||[]).slice(-1)[0],P=applyMods(genH(p,data.tests,data.lifts),p,data.lifts),m=calc(p,b);return{p,m,P,tot:P.reduce((a,w)=>a+w.s.length,0),dn:Object.values(data.done).filter(Boolean).length}};
 const nextS=P=>{for(let w=0;w<P.length;w++)for(let j=0;j<P[w].s.length;j++)if(!data.done[w+"-"+j])return[w,j];return null};
 let tab="a",step=0;
 const dg=$("#dg");dg.onclick=e=>{if(e.target===dg)dg.close()};
@@ -1275,21 +1337,26 @@ const chp=(n,o,v,row)=>`<div class="ch${row?" r":""}">${o.map(([k,t,s])=>`<label
 
 const OBJL=[["polyvalent","Test militaire","Équilibre entre toutes les épreuves de l’Armée"],["cardio","Cardio et vitesse","2400 m, sprint, explosivité"],["endurance","Endurance","Plus de volume de course"],["hypertrophie","Prise de muscle","Musculation ciblée sur tes muscles, avec le choix de la méthode"],["force","Force","Squat, développé couché, soulevé de terre (5/3/1 et autres)"],["perte","Perte de gras","Musculation, circuits et cardio, avec un déficit calorique modéré"],["forme","Forme générale","Rester en forme et en bonne santé"]];
 const BUTL=[["auto","Automatique","Selon ton corps"],["perdre","Perdre du gras","Déficit calorique modéré"],["maintenir","Maintenir mon poids","Calories stables"],["prendre","Prendre du muscle","Léger surplus calorique"]];
+const O2D={endurance:"Sortie longue et seuil",cardio:"Fractionné, VO2max, vitesse",hypertrophie:"Musculation de tout le corps",force:"Charges lourdes, 3 à 5 répétitions"};
 const MATL=[["salle","En salle","Barres, machines, poulies"],["maison","À la maison","Haltères, élastiques, sac à dos"],["corps","Sans matériel","Poids du corps seul"]];
 function viewForm(){const p=data.p||{},js=Array.isArray(p.jours)?p.jours:DEFJ[p.seances||3],eq0=Array.isArray(p.eq)?p.eq:["hal","elas","banc"];let jt=Array.isArray(p.jours);
 const S=[
 `<h2>Ton corps</h2><p class="mu">Ces mesures servent à calculer ton IMC, ta masse musculaire, tes calories et tes protéines.</p>${fld("Prénom","prenom",p.prenom,{t:"text",r:1})}${lb("Sexe")}${chp("sexe",[["h","Homme"],["f","Femme"]],p.sexe,1)}<div class="g">${fld("Âge","age",p.age,{r:1})}${fld("Taille (cm)","taille",p.taille,{r:1})}${fld("Poids (kg)","poids",p.poids,{r:1})}</div>${lb("Activité au quotidien (hors sport)")}${chp("act",[[0,"Plutôt assis","Bureau, études"],[1,"Debout, en mouvement","Commerce, enseignement, soins"],[2,"Physique","Métier manuel, beaucoup de marche ou de portage"]],p.act==null?1:p.act)}`,
 `<h2>Ton tour de taille</h2><p class="mu">Facultatif, mais très utile : c’est le meilleur repère pour suivre ta progression, et il servira de point de départ. Il ne change pas tes séances.</p><div class="g">${fld("Tour de taille (cm)","ta",p.ta,{h:"Au niveau du nombril, ventre relâché"})}</div><p class="tip">Pas de mètre ruban ? Fais le tour avec une ficelle, un lacet ou une ceinture, marque l’endroit, puis mesure la longueur avec une règle ou un mètre de bricolage.</p><details class="mx"${p.cou>0||p.mg>0||p.mm>0||p.hanc>0?" open":""}><summary>Plus précis (facultatif) : estimer ta masse grasse</summary><p class="mu">Avec ton tour de cou (et de hanches pour les femmes), l’appli estime ta masse grasse et règle plus finement tes calories et tes protéines. Sinon, elle l’estime à partir de ton poids, de ta taille et de ton âge.</p><div class="g">${fld("Tour de cou (cm)","cou",p.cou)}${fld("Tour de hanches (cm)","hanc",p.hanc,{h:"Femmes seulement"})}${fld("Taux de masse grasse connu (%)","mg",p.mg,{h:"Si tu as fait un bilan"})}${fld("Masse musculaire connue (kg)","mm",p.mm,{h:"Si tu as fait un bilan"})}</div></details>`,
 `<h2>Ton niveau</h2>${lb("Niveau sportif")}${chp("niveau",[[0,"Débutant","Peu ou pas de sport"],[1,"Intermédiaire","Je m’entraîne régulièrement"],[2,"Avancé","Je m’entraîne depuis des années"]],p.niveau)}${lb("Séances par semaine (choisis ce que tu peux tenir)")}${chp("seances",[[2,"2"],[3,"3"],[4,"4"],[5,"5"]],p.seances,1)}${lb("Tes jours d’entraînement")}<p class="mu">Coche autant de jours que de séances. L’appli place les séances difficiles pour éviter deux jours durs d’affilée.</p><div class="dj">${DJ.map((d,i)=>`<label><input type="checkbox" name="j_${i}" ${js.includes(i)?"checked":""}><span>${d.slice(0,3)}</span></label>`).join("")}</div>${lb("Temps disponible par séance")}${chp("duree",[[30,"30 min"],[45,"45 min"],[60,"1 h"],[75,"1 h 15+"]],p.duree||(data.p?75:60),1)}${lb("Peux-tu courir 30 min sans t’arrêter ?")}${chp("run30",[["oui","Oui"],["non","Non"]],p.run30,1)}${fld("Temps sur 5 km (min)","t5",p.t5,{h:"Optionnel, par exemple 28,5"})}`,
-`<h2>Ton objectif</h2>${chp("objectif",OBJL,p.objectif)}${lb("Ton objectif de poids")}<p class="mu">Il règle tes calories et tes protéines.</p>${chp("but",BUTL,p.but||"auto")}<div class="g">${fld("Poids visé (kg)","pv",p.pv,{h:"Facultatif, par exemple 87. Il sert à suivre ta progression, il ne change pas ton programme."})}</div>${lb("Où t’entraînes-tu ?")}${chp("mat",MATL,p.mat)}<div id="eqw">${lb("Ton matériel")}<p class="mu">Coche ce que tu as : les exercices s’adaptent.</p>${[["hal","Haltères ou kettlebell"],["elas","Élastiques"],["barre","Barre de traction"],["banc","Banc ou chaise solide"]].map(([k,t])=>`<label class="c" data-eq="${k}"><input type="checkbox" name="eq_${k}" ${eq0.includes(k)?"checked":""}>${t}</label>`).join("")}</div><div id="dtw">${fld("Date de ton test ou de ta course","dtest",p.dtest,{t:"date",h:"Facultatif. S’il a lieu dans moins de 8 semaines, le programme est raccourci pour finir la semaine du test."})}</div><div id="pgw"></div><div id="fcw">${focusUI(p)}</div>`,
+`<h2>Ton objectif</h2>${chp("objectif",OBJL,p.objectif)}<div id="o2w"></div>${lb("Ton objectif de poids")}<p class="mu">Il règle tes calories et tes protéines.</p>${chp("but",BUTL,p.but||"auto")}<div class="g">${fld("Poids visé (kg)","pv",p.pv,{h:"Facultatif, par exemple 87. Il sert à suivre ta progression, il ne change pas ton programme."})}</div>${lb("Où t’entraînes-tu ?")}${chp("mat",MATL,p.mat)}<div id="eqw">${lb("Ton matériel")}<p class="mu">Coche ce que tu as : les exercices s’adaptent.</p>${[["hal","Haltères ou kettlebell"],["elas","Élastiques"],["barre","Barre de traction"],["banc","Banc ou chaise solide"]].map(([k,t])=>`<label class="c" data-eq="${k}"><input type="checkbox" name="eq_${k}" ${eq0.includes(k)?"checked":""}>${t}</label>`).join("")}</div><div id="dtw">${fld("Date de ton test ou de ta course","dtest",p.dtest,{t:"date",h:"Facultatif. S’il a lieu dans moins de 8 semaines, le programme est raccourci pour finir la semaine du test."})}</div><div id="pgw"></div><div id="fcw">${focusUI(p)}</div>`,
 `<h2>Tes résultats actuels</h2><p class="mu">Teste-toi si tu peux, sinon laisse vide : le programme part du niveau choisi.</p><div class="g">${fld("Pompes en 2 min","pompes",p.pompes)}${fld("Sit-ups en 2 min","situps",p.situps)}${fld("Course 2400 m","t2400",p.t2400,{t:"text",h:"min:sec, par exemple 11:30"})}</div><div id="sautw">${fld("Saut en longueur (cm)","saut",p.saut,{h:"Sans élan, pieds joints, sur de l’herbe ou un sol non glissant : pas besoin de bac à sable. Mesure jusqu’au talon le plus proche. Laisse vide si tu ne peux pas."})}</div>`,
 `<h2>Ta santé</h2><p class="mu">Coche ce qui te concerne.</p>${SANTE.map((x,i)=>`<label class="c"><input type="checkbox" name="s${i}" ${(p.sante||[]).includes(i)?"checked":""}>${x}</label>`).join("")}<div id="bzw" class="card" style="margin:6px 0 0;padding:14px 18px"><p class="lb" style="margin-top:0">Où as-tu mal ?</p><p class="mu" style="margin-top:0">Les exercices qui sollicitent le plus ces zones sont retirés du programme.</p>${Object.keys(BZN).map(k=>`<label class="c"><input type="checkbox" name="bz_${k}" ${(p.bz||[]).includes(k)?"checked":""}>${BZN[k][0].toUpperCase()+BZN[k].slice(1)}</label>`).join("")}</div><label class="f">Précisions pour ton coach<small>Facultatif. Ce texte est lu par ton coach, pas par l’appli.</small><textarea name="notes" rows="2">${esc(p.notes)}</textarea></label>`];
 A.innerHTML=`<div class="bar"><i id="pb"></i></div><p class="mu" id="pl"></p><form id="fp">${S.map((h,i)=>`<section data-s="${i}" hidden>${h}</section>`).join("")}<p id="er" style="color:var(--er)"></p><div class="row"><button type="button" class="o" id="bk"></button><button type="button" id="nx"></button></div></form>`;
 const f=$("#fp"),sec=[...f.querySelectorAll("[data-s]")];f.onsubmit=e=>e.preventDefault();
-const upd=()=>{const o=f.objectif.value,n=+f.seances.value||p.seances||3,mat=f.mat.value||p.mat||"salle",sx=f.sexe.value||p.sexe||"h",cur=(f.prog&&f.prog.value)||p.prog||"auto",L=progOpts(o,n,mat,sx);
+let o2m=p.obj2||"non";
+const upd=()=>{const o=f.objectif.value,n=+f.seances.value||p.seances||3,mat=f.mat.value||p.mat||"salle",sx=f.sexe.value||p.sexe||"h",cur=(f.prog&&f.prog.value)||p.prog||"auto";
+const c2=o2m,o2L=HY2[o]&&hySplit(n)?HY2[o]:[],o2=o2L.includes(c2)?c2:"non",sp=hySplit(n);
+$("#o2w").innerHTML=o2L.length?lb("Un deuxième objectif ? (facultatif)")+`<p class="mu">Ton objectif principal garde la majorité des séances. Chaque partie est construite comme un programme complet, puis les séances sont placées pour bien récupérer.</p>`+chp("obj2",[["non","Non, un seul objectif"]].concat(o2L.map(k=>[k,OBJ[k],O2D[k]])),o2)+(o2!=="non"?`<p class="mu" style="margin-top:8px">Répartition : <b>${sp[0]} séance${sp[0]>1?"s":""}</b> ${esc(OBJ[o].toLowerCase())} et <b>${sp[1]} séance${sp[1]>1?"s":""}</b> ${esc(OBJ[o2].toLowerCase())} par semaine.</p>`:""):(HY2[o]?`<p class="mu" style="margin:10px 0 0">À partir de 3 séances par semaine, tu peux ajouter un deuxième objectif (par exemple de l’endurance ou de la musculation).</p>`:"")+`<input type="hidden" name="obj2" value="non">`;
+const L=progOpts(o,o2!=="non"?sp[0]:n,mat,sx);
 $("#pgw").innerHTML=L.length>1?lb(o==="cardio"||o==="endurance"?"Style d’entraînement":"Méthode d’entraînement")+`<p class="mu">Chaque méthode s’inspire d’un programme éprouvé. Le choix automatique convient à la plupart des gens.</p>`+chp("prog",L,L.some(x=>x[0]===cur)?cur:"auto"):`<input type="hidden" name="prog" value="auto">`;
 $("#fcw").hidden=!(o==="hypertrophie"||(sx==="f"&&(o==="perte"||o==="forme")));$("#eqw").hidden=mat==="salle";f.querySelectorAll("[data-eq]").forEach(l=>l.hidden=mat==="corps"&&(l.dataset.eq==="hal"||l.dataset.eq==="elas"));$("#dtw").hidden=!["polyvalent","cardio","endurance"].includes(o);$("#sautw").hidden=o!=="polyvalent";$("#bzw").hidden=!f.s3.checked};
-upd();f.addEventListener("change",e=>{const nm=e.target.name||"";if(nm.startsWith("j_"))jt=true;if(nm==="seances"&&!jt){const d=DEFJ[+e.target.value]||[];DJ.forEach((_,i)=>f["j_"+i].checked=d.includes(i))}upd()});
+upd();f.addEventListener("change",e=>{const nm=e.target.name||"";if(nm==="obj2"&&e.target.type==="radio")o2m=e.target.value;if(nm.startsWith("j_"))jt=true;if(nm==="seances"&&!jt){const d=DEFJ[+e.target.value]||[];DJ.forEach((_,i)=>f["j_"+i].checked=d.includes(i))}upd()});
 const show=()=>{sec.forEach((e,i)=>e.hidden=i!==step);$("#pb").style.width=(step+1)/S.length*100+"%";$("#pl").textContent=`Étape ${step+1} sur ${S.length}`;$("#bk").textContent=step?"Retour":"Annuler";$("#bk").hidden=!step&&!data.p;$("#nx").textContent=step===S.length-1?"Créer mon programme":"Continuer";$("#er").textContent="";scrollTo(0,0)};
 show();
 $("#bk").onclick=()=>{if(step){step--;show()}else{editing=false;render()}};
@@ -1298,12 +1365,12 @@ if(step===2){const nj=DJ.filter((_,i)=>f["j_"+i].checked).length,ns=+f.seances.v
 if(step===3&&f.dtest.value&&!$("#dtw").hidden&&f.dtest.value<today()){$("#er").textContent="La date du test est déjà passée.";return}
 if(step<S.length-1){step++;show();return}
 const g=n=>f[n].value,N=n=>g(n)===""?0:parseFloat(String(g(n)).replace(",","."));
-const q={prenom:g("prenom").trim(),sexe:g("sexe"),age:N("age"),taille:N("taille"),poids:N("poids"),act:+g("act"),mg:N("mg"),mm:N("mm"),cou:N("cou"),ta:N("ta"),hanc:N("hanc"),niveau:+g("niveau"),seances:+g("seances"),run30:g("run30"),t5:N("t5"),objectif:g("objectif"),but:g("but"),mat:g("mat"),prog:g("prog")||"auto",pompes:N("pompes"),situps:N("situps"),t2400:g("t2400").trim(),saut:N("saut"),notes:g("notes").trim(),duree:+g("duree")||60,jours:DJ.map((_,i)=>f["j_"+i].checked?i:-1).filter(i=>i>=0),eq:g("mat")!=="salle"?["hal","elas","barre","banc"].filter(k=>f["eq_"+k].checked&&!(g("mat")==="corps"&&(k==="hal"||k==="elas"))):[],dtest:["polyvalent","cardio","endurance"].includes(g("objectif"))?g("dtest"):"",bz:f.s3.checked?Object.keys(BZN).filter(k=>f["bz_"+k].checked):[],focus:Object.keys(MXL).filter(k=>f["fc_"+k].checked),sante:SANTE.map((_,i)=>f["s"+i].checked?i:-1).filter(i=>i>=0),pv:N("pv")>0?N("pv"):undefined};
+const q={prenom:g("prenom").trim(),sexe:g("sexe"),age:N("age"),taille:N("taille"),poids:N("poids"),act:+g("act"),mg:N("mg"),mm:N("mm"),cou:N("cou"),ta:N("ta"),hanc:N("hanc"),niveau:+g("niveau"),seances:+g("seances"),run30:g("run30"),t5:N("t5"),objectif:g("objectif"),but:g("but"),mat:g("mat"),prog:g("prog")||"auto",pompes:N("pompes"),situps:N("situps"),t2400:g("t2400").trim(),saut:N("saut"),notes:g("notes").trim(),duree:+g("duree")||60,jours:DJ.map((_,i)=>f["j_"+i].checked?i:-1).filter(i=>i>=0),eq:g("mat")!=="salle"?["hal","elas","barre","banc"].filter(k=>f["eq_"+k].checked&&!(g("mat")==="corps"&&(k==="hal"||k==="elas"))):[],dtest:["polyvalent","cardio","endurance"].includes(g("objectif"))?g("dtest"):"",bz:f.s3.checked?Object.keys(BZN).filter(k=>f["bz_"+k].checked):[],focus:Object.keys(MXL).filter(k=>f["fc_"+k].checked),sante:SANTE.map((_,i)=>f["s"+i].checked?i:-1).filter(i=>i>=0),pv:N("pv")>0?N("pv"):undefined,obj2:undefined};{const v=g("obj2");if(v&&v!=="non"&&(HY2[q.objectif]||[]).includes(v)&&hySplit(q.seances))q.obj2=v;else delete q.obj2}
 const bad=q.age<14||q.age>70?"Âge invalide.":q.taille<120||q.taille>230?"Taille invalide (en cm).":q.poids<30||q.poids>250?"Poids invalide (en kg).":q.mg&&(q.mg<3||q.mg>60)?"Taux de masse grasse invalide.":q.mm&&(q.mm<10||q.mm>=q.poids)?"Masse musculaire invalide.":q.t2400&&!tsec(q.t2400)?"Temps du 2400 m : écris-le comme 11:30.":q.pv&&(q.pv<30||q.pv>250)?"Poids visé invalide (en kg).":"";
 if(q.focus.length>3){$("#er").textContent="Choisis 3 muscles au maximum.";return}
 if(bad){$("#er").textContent=bad;return}
 q.nw=data.p&&data.p.dtest===q.dtest?(data.p.nw||0):nwOf(q.dtest,today());
-const SK=["objectif","seances","mat","prog","niveau","sexe","run30","duree","nw"],o0=data.p||{},DF={duree:75,nw:0,jours:DEFJ[o0.seances],eq:o0.mat==="salle"?[]:o0.mat==="corps"?["banc"]:["hal","elas","banc"],focus:[],bz:[]},chg=!!data.p&&(SK.some(k=>String(o0[k]??DF[k]??"")!==String(q[k]??""))||["focus","jours","eq","bz"].some(k=>String(o0[k]||DF[k])!==String(q[k]||[])));
+const SK=["objectif","obj2","seances","mat","prog","niveau","sexe","run30","duree","nw"],o0=data.p||{},DF={duree:75,nw:0,jours:DEFJ[o0.seances],eq:o0.mat==="salle"?[]:o0.mat==="corps"?["banc"]:["hal","elas","banc"],focus:[],bz:[]},chg=!!data.p&&(SK.some(k=>String(o0[k]??DF[k]??"")!==String(q[k]??""))||["focus","jours","eq","bz"].some(k=>String(o0[k]||DF[k])!==String(q[k]||[])));
 if(chg&&Object.values(data.done).some(Boolean)&&!confirm("Ces changements modifient la structure de ton programme : les séances cochées repartent à zéro. Ton historique, tes tests et tes charges notées sont conservés. Continuer ?"))return;
 const nb=$("#nx");if(nb.disabled)return;nb.disabled=true;const was=!!data.p;
 if(chg){data.done={};wk=0;if(Array.isArray(data.mods))data.mods=data.mods.filter(r=>r.c==="*")}data.p=q;if(!data.start)data.start=today();if(!was&&!data.dep)data.dep=depSnap(data);editing=false;step=0;tab="a";await save();render();scrollTo(0,0);if(was)flash(chg?"Programme recalculé":"Profil mis à jour");else readyScreen()}}
@@ -1324,7 +1391,7 @@ function viewHome(){const{p,m,P,tot,dn}=ctx(),nx=nextS(P),cw=nx?nx[0]:P.length-1
 const s0=new Date((data.start||today())+"T12:00:00"),e0=new Date(s0.getTime()+(P.length*7-1)*864e5),df=d=>d.toLocaleDateString("fr-BE",{day:"numeric",month:"short"});
 const st=(l,ic,v,u,c)=>`<div><div class="h"><span>${l}</span>${IC(ic)}</div><b>${v}<small>${u}</small></b><span class="c">${c}</span></div>`;
 const S=nx?P[nx[0]].s[nx[1]]:null,exs=S?S.it.map(x=>parseEx(x)).filter(Boolean).map(e=>e.key):[],wd=W.s.filter((_,j)=>data.done[cw+"-"+j]).length;
-const hero=S?`<section class="hero2"><div class="hz"><div class="hzt"><div class="ey">Prochaine séance${S.day!=null?" · "+DJ[S.day].toLowerCase():""} · séance ${nx[1]+1} · semaine ${nx[0]+1}${(data.cyc||1)>1?" · cycle "+esc(data.cyc):""}</div><h3>${esc(S.nm)}</h3><p class="sub">${S.d}${exs.length?" · "+esc(exs.slice(0,3).join(", "))+(exs.length>3?"…":""):""}</p></div><div class="hzr">${ringSVG(wd,W.s.length)}<small>semaine ${cw+1}</small></div></div>${ck?`<p class="ckm">${IC('<path d="M5 12l5 5 9-10"/>')}<span>${esc(ck.msg)}</span></p>`:""}<div class="row"><button id="go">Commencer la séance ${IC('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button>${ck?"":`<button class="o" id="ck">Bilan du jour</button>`}</div></section>`
+const hero=S?`<section class="hero2"><div class="hz"><div class="hzt"><div class="ey">Prochaine séance${S.day!=null?" · "+DJ[S.day].toLowerCase():""} · séance ${nx[1]+1} · semaine ${nx[0]+1}${(data.cyc||1)>1?" · cycle "+esc(data.cyc):""}</div><h3>${esc(S.nm)}</h3><p class="sub">${S.d}${exs.length?" · "+esc(exs.slice(0,3).join(", "))+(exs.length>3?"…":""):""}</p>${homeT(nx[0],nx[1],S,P[nx[0]].ow??nx[0])}</div><div class="hzr">${ringSVG(wd,W.s.length)}<small>semaine ${cw+1}</small></div></div>${ck?`<p class="ckm">${IC('<path d="M5 12l5 5 9-10"/>')}<span>${esc(ck.msg)}</span></p>`:""}<div class="row"><button id="go">Commencer la séance ${IC('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button>${ck?"":`<button class="o" id="ck">Bilan du jour</button>`}</div></section>`
 :`<section class="hero2"><div class="ey">Cycle terminé</div><h3>Bravo, tes ${P.length} semaines sont faites.</h3><p class="sub">Refais tes tests (Suivi, partie Épreuves), puis lance un nouveau cycle : il repart de tes meilleures séries notées.</p><div class="row"><button id="nc">Lancer un nouveau cycle</button><button class="o" id="te">Mes épreuves</button></div></section>`;
 A.innerHTML=`${bc("Vue d’ensemble")}<h2 class="gr">Bonjour${p.prenom?" "+esc(p.prenom):""}.</h2><p class="sub">${OBJ[p.objectif]}${P.meta.nm!==OBJ[p.objectif]?" · "+esc(P.meta.nm):""} · du ${df(s0)} au ${df(e0)}${p.dtest?" · test le "+new Date(p.dtest+"T12:00:00").toLocaleDateString("fr-BE",{day:"numeric",month:"long"}):""}</p>
 ${(p.sante||[]).length?`<div class="warn"><b>Avis médical nécessaire avant de commencer.</b> Tu as signalé un point de santé : montre ce programme à ton médecin. L’Armée demande de toute façon un certificat médical pour le test. En cas de douleur, vertige ou malaise, arrête.</div>`:""}
@@ -1334,14 +1401,14 @@ ${hero}
 ${regStrip()}
 ${golHTML()}
 ${homeTip()}
-<div class="two"><section class="card"><div class="ch2"><h3>Semaine ${cw+1}</h3><span class="bd">${wd} / ${W.s.length} faites</span></div>${W.s.map((s,j)=>{const d=data.done[cw+"-"+j],k=SKIND(s);return`<button class="rw${d?" dn":""}" data-j="${j}"><span class="ti${justK(cw+"-"+j)}">${IC(d?'<path d="M5 12l5 5 9-10"/>':SIC[k])}</span><span class="rt"><span class="mu">${s.day!=null?DJ[s.day]+" · ":""}séance ${j+1}${d?" · faite":""}</span><b>${esc(s.nm)}</b><span class="mu">${s.d}</span></span>${IC('<path d="M9 6l6 6-6 6"/>')}</button>`}).join("")}</section>
+<div class="two"><section class="card"><div class="ch2"><h3>Semaine ${cw+1}</h3><span class="bd">${wd} / ${W.s.length} faites</span></div>${W.s.map((s,j)=>{const d=data.done[cw+"-"+j],k=SKIND(s);return`<button class="rw${d?" dn":""}" data-j="${j}"><span class="ti${justK(cw+"-"+j)}">${IC(d?'<path d="M5 12l5 5 9-10"/>':SIC[k])}</span><span class="rt"><span class="mu">${s.day!=null?DJ[s.day]+" · ":""}séance ${j+1}${s.o2&&p.obj2?" · "+esc(OBJ[p.obj2].toLowerCase()):""}${s.home?" · à la maison":""}${d?" · faite":""}</span><b>${esc(s.nm)}</b><span class="mu">${s.d}</span></span>${IC('<path d="M9 6l6 6-6 6"/>')}</button>`}).join("")}</section>
 <section class="card"><div class="ch2"><h3>Le mot du coach</h3></div><p>${ck?esc(ck.msg):"La régularité passe avant la performance d’un jour. Garde de la marge, note tes sensations et tes séries : l’appli ajuste la suite."}</p><p class="mu">${esc(m.cap)}</p><div class="row">${ck?`<button class="o" id="ck">Refaire mon bilan</button>`:""}<button class="o" id="nu">Voir ma nutrition</button></div></section></div>
 <div class="st st4">${st("Poids actuel",'<path d="M6 8h12l2 12H4zM9 8a3 3 0 016 0"/>',cm(m.poids),"kg","Poids santé : "+m.sain[0]+" à "+m.sain[1]+" kg")}${st("Calories",'<path d="M12 3c1 4 5 5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-9z"/>',m.kcal,"kcal / jour",butLbl(m))}${st("Protéines",'<path d="M4 12c0-4 4-7 8-7s8 3 8 7-4 7-8 7-8-3-8-7z"/><path d="M9 12h6"/>',m.prot,"g / jour",cm(R(m.prot/m.poids*10)/10)+" g par kg")}${st("Séances réalisées",'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',dn,"/ "+tot,"Sur ton cycle de "+P.length+" semaines")}</div>
 <div class="mlk"><button class="lk" id="hm1">Toutes mes mesures ${IC('<path d="M9 6l6 6-6 6"/>')}</button><button class="lk" id="hm2">Ma nutrition complète ${IC('<path d="M9 6l6 6-6 6"/>')}</button></div>`;
 const go=$("#go");if(go)go.onclick=()=>openSess(nx[0],nx[1]);
 const nc=$("#nc");if(nc)nc.onclick=newCycle;const te=$("#te");if(te)te.onclick=()=>{tab="e";render();scrollTo(0,0)};
 A.querySelectorAll("[data-j]").forEach(r=>r.onclick=()=>openSess(cw,+r.dataset.j));
-instBind();const h1=$("#hm1");if(h1)h1.onclick=()=>{tab="s";render();setTimeout(()=>{const t=$("#t-co");if(t)t.scrollIntoView({block:"start"})},0)};const h2=$("#hm2");if(h2)h2.onclick=()=>{tab="n";render();scrollTo(0,0)};
+instBind();homeBind(A);const h1=$("#hm1");if(h1)h1.onclick=()=>{tab="s";render();setTimeout(()=>{const t=$("#t-co");if(t)t.scrollIntoView({block:"start"})},0)};const h2=$("#hm2");if(h2)h2.onclick=()=>{tab="n";render();scrollTo(0,0)};
 const rg=$("#rgs");if(rg)rg.onclick=()=>{tab="s";render();setTimeout(()=>{const t=$("#tro");if(t)t.scrollIntoView({block:"start"})},0)};
 const c=$("#ck");if(c)c.onclick=openCheck;$("#nu").onclick=()=>{tab="n";render();scrollTo(0,0)}}
 
@@ -1422,8 +1489,8 @@ A.innerHTML=`${bc("Programme")}<h2>Programme</h2>${advHTML()}<details class="car
 <div class="wh"><div><h3>${W.t}</h3><span class="bd">${wd} / ${W.s.length} faites</span></div><p class="mu">${W.f}</p></div>
 <div class="tb noprint"><button id="tmb">${IC('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>')}Minuteur</button><button id="pr1">${IC('<path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/>')}Imprimer la semaine</button><button id="pr8">Imprimer les 8 semaines</button></div>
 ${W.s.map((s,j)=>{const k=wk+"-"+j,d=data.done[k],op=k in OS?OS[k]:j===def,its=s.it.map((x,i)=>[x,i]),main=its.filter(([x])=>!CONS.test(x)),cs=its.filter(([x])=>CONS.test(x)),nEx=s.it.filter(x=>parseEx(x)||/^(.+?) : \d+ × /.test(x)).length;
-return`<details class="card s${d?" fait":""}" id="s-${j}" data-k="${k}"${op?" open":""}><summary class="sh"><span class="st2${justK(k)}">${IC(d?'<path d="M5 12l5 5 9-10"/>':SIC[SKIND(s)])}</span><span class="sm"><span class="mu">${s.day!=null?DJ[s.day]+" · ":""}séance ${j+1}${d?" · faite":""}</span><b>${esc(s.nm)}</b><span class="mu">${s.d}${nEx?" · "+nEx+" exercices":""}${s.mod?" · modifiée":""}</span></span>${s.it.some(modOK)?`<button class="edb" data-ed="${j}" aria-label="Modifier la séance" title="Modifier la séance">${IC('<path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/>')}</button>`:""}${IC('<path d="M6 9l6 6 6-6"/>')}</summary>
-${coNote(CO.notes,wk,j)?`<p class="cco"><b>Consigne de ton coach</b>${esc(coNote(CO.notes,wk,j))}</p>`:""}<ul>${main.map(([x,i])=>itemHTML(x,i,j,OW,s.tg&&s.tg[i])).join("")}</ul>${modBar(wk,j,s)}${cs.length?`<details class="cs"><summary>Consignes : repos, intensité, progression</summary><ul>${cs.map(([x,i])=>itemHTML(x,i,j,OW)).join("")}</ul></details>`:""}
+return`<details class="card s${d?" fait":""}" id="s-${j}" data-k="${k}"${op?" open":""}><summary class="sh"><span class="st2${justK(k)}">${IC(d?'<path d="M5 12l5 5 9-10"/>':SIC[SKIND(s)])}</span><span class="sm"><span class="mu">${s.day!=null?DJ[s.day]+" · ":""}séance ${j+1}${s.o2&&data.p.obj2?" · "+esc(OBJ[data.p.obj2].toLowerCase()):""}${d?" · faite":""}</span><b>${esc(s.nm)}</b><span class="mu">${s.d}${nEx?" · "+nEx+" exercices":""}${s.home?" · à la maison":s.mod?" · modifiée":""}</span></span>${s.it.some(modOK)&&!s.home?`<button class="edb" data-ed="${j}" aria-label="Modifier la séance" title="Modifier la séance">${IC('<path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/>')}</button>`:""}${IC('<path d="M6 9l6 6 6-6"/>')}</summary>
+${s.home||(nx&&nx[0]===wk&&nx[1]===j)?homeT(wk,j,s,OW):""}${coNote(CO.notes,wk,j)?`<p class="cco"><b>Consigne de ton coach</b>${esc(coNote(CO.notes,wk,j))}</p>`:""}<ul>${main.map(([x,i])=>itemHTML(x,i,j,OW,s.tg&&s.tg[i])).join("")}</ul>${modBar(wk,j,s)}${cs.length?`<details class="cs"><summary>Consignes : repos, intensité, progression</summary><ul>${cs.map(([x,i])=>itemHTML(x,i,j,OW)).join("")}</ul></details>`:""}
 <div class="sbt"><button class="${d?"o ":""}go2" data-r="${j}">${IC(ICP)}${d?"Refaire en guidé":"Démarrer"}</button><button class="o fin" data-l="${k}">${d?"Mon bilan":"Terminer"}</button></div></details>`}).join("")}
 ${volCard(W)}`;
 A.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{wk=+b.dataset.w;render()});
@@ -1431,7 +1498,7 @@ A.querySelectorAll("details.s").forEach(d=>d.ontoggle=()=>{OS[d.dataset.k]=d.ope
 A.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>modal(gHTML(...gdata(b.dataset.g))));
 A.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{const[j,i]=b.dataset.n.split("-");openLift(wk,+j,+i)});
 A.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>openLog(b.dataset.l));
-A.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>runOpen(wk,+b.dataset.r));modBind(wk);
+A.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>runOpen(wk,+b.dataset.r));modBind(wk);homeBind(A);
 const wb=A.querySelector(".wk"),on=wb.querySelector(".on");if(on)wb.scrollLeft=on.offsetLeft-wb.clientWidth/2+on.clientWidth/2;
 tmInit();$("#tmb").onclick=tmOpen;$("#pr8").onclick=printAll;
 $("#pr1").onclick=()=>{const ds=[...A.querySelectorAll("details")],o=ds.map(d=>d.open);ds.forEach(d=>d.open=true);print();ds.forEach((d,i)=>d.open=o[i])};
@@ -1464,7 +1531,7 @@ const BPR={s1:x=>[x.n,1],s10:x=>[x.n,10],s25:x=>[x.n,25],s50:x=>[x.n,50],s100:x=
 const BUN={s:["séance","séances"],f:["semaine régulière","semaines régulières"],r:["record","records"],t:["test","tests"]};
 function bLeft(b,x){const f=BPR[b[0]];if(!f)return b[2];const[h,g]=f(x),l=Math.max(0,g-h),u=BUN[b[4]]||["",""];return"Encore "+l+" "+(l>1?u[1]:u[0])}
 const bIco=(b,ok)=>`<span class="bi k${b[4]}${ok?" ok":""}">${IC(BI[b[4]])}</span>`;
-function stats(){let P=null;try{P=data.p?gen(data.p,data.tests,data.lifts):null}catch(e){}const d=data.done||{},g=regul(),all=(w,i)=>w.s.length>0&&w.s.every((_,j)=>d[i+"-"+j]),c2=(data.cyc||1)>1;
+function stats(){let P=null;try{P=data.p?genH(data.p,data.tests,data.lifts):null}catch(e){}const d=data.done||{},g=regul(),all=(w,i)=>w.s.length>0&&w.s.every((_,j)=>d[i+"-"+j]),c2=(data.cyc||1)>1;
 return{n:allLogs().filter(l=>l.ok==="oui").length,...g,rec:nRec(),t:(data.tests||[]).length,fw:c2||(P?P.some(all):false),cy:c2||(P?P.every(all):false)}}
 const earnedB=x=>BDG.filter(b=>b[3](x)).map(b=>b[0]);
 function initBadges(){if(data.p&&!Array.isArray(data.bseen))data.bseen=earnedB(stats())}
@@ -1584,7 +1651,9 @@ bw0=m0&&/barre/i.test(m0[1])&&!/poulie|haltère/i.test(m0[1])?(/EZ/i.test(m0[1])
 wup=m0?`puis séries d’approche sur « ${m0[1]} » : ${wk0(r25(k0*.5))} × 8, puis ${wk0(r25(k0*.75))} × 4${m0[3]||""}`:"puis 2 séries d’approche légères du premier exercice (50 % puis 75 % de la charge)";
 it[i]=it[i].replace(/puis (séries d’approche sur « .*|2 séries d’approche légères du premier exercice \(50 % puis 75 % de la charge\))$/,wup)}
 function applyMods(P,p,H,M,C){if(M===undefined)M=data.mods;if(C===undefined)C=typeof CO!=="undefined"&&CO&&Array.isArray(CO.mods)?CO.mods:[];M=Array.isArray(M)?M:[];C=Array.isArray(C)?C:[];if(!M.length&&!C.length)return P;
-P.forEach((W,wi)=>{const ow=W.ow??wi;W.s=W.s.map((s,j)=>{const k=wi+"-"+j,sc=r=>r&&(r.c==="*"||r.c==="*-"+j||r.c===k),rs=M.filter(sc).map(r=>[r,0]).concat(C.filter(sc).map(r=>[r,1]));if(!rs.length||!s.it.some(modOK))return s;
+P.forEach((W,wi)=>{const ow=W.ow??wi;W.s=W.s.map((s,j)=>{const k=wi+"-"+j,sc=r=>r&&(r.c==="*"||r.c==="*-"+j||r.c===k),all=M.filter(sc).map(r=>[r,0]).concat(C.filter(sc).map(r=>[r,1])),hm=all.some(([r])=>r.t==="home"&&r.c===k),s1=modS(s,all.filter(([r])=>r.t!=="home"),ow,p,H);return hm?homeS(s1,p,ow):s1})});return P}
+/* Règles du client et du coach sur une séance (remplacer, retirer, ajouter) */
+function modS(s,rs,ow,p,H){if(!rs.length||!s.it.some(modOK))return s;
 const it=s.it.slice(),tg=it.map(()=>""),ss=/Format (superset|circuit)/.test(it.join(" "));let ds=0,ch=0;const has=n=>it.some(l=>exNm(l)===n);
 /* Les changements du client d’abord, ceux du coach ensuite : le coach a toujours le dernier mot.
    Une règle du coach vise l’exercice affiché (a) ou, si le client est revenu en arrière, l’exercice d’origine (o). */
@@ -1596,15 +1665,66 @@ it[i]=mkLine(r.b,+m[2],rr,ow,p,H);tg[i]=co?"csw":(tg[i]==="add"?"add":"sw");ch=1
 else if(r.t==="rm"){const i=co?at(r):it.findIndex(l=>modOK(l)&&exNm(l)===r.a);if(i<0)return;ds-=+it[i].match(EXL)[2];it.splice(i,1);tg.splice(i,1);ch=1}
 else if(r.t==="add"){if(!LBN[r.b]||has(r.b))return;let i=-1;it.forEach((l,n)=>{if(exNm(l))i=n});if(i<0)return;const n=Math.max(1,Math.min(5,+r.s||3)),x=LBN[r.b];
 it.splice(i+1,0,mkLine(r.b,TIME.test(x.n)?Math.min(n,3):n,repsFor(x,ow,p),ow,p,H));tg.splice(i+1,0,co?"cadd":"add");ds+=n;ch=1}});
-if(!ch)return s;wupFix(it,p);return{...s,it,tg,mod:1,d:Math.max(10,r5(parseInt(s.d)+ds*(ss?1.75:2.4)))+" min"}})});return P}
+if(!ch)return s;wupFix(it,p);return{...s,it,tg,mod:1,d:Math.max(10,r5(parseInt(s.d)+ds*(ss?1.75:2.4)))+" min"}}
 /* Exercices de remplacement possibles : même muscle, matériel et zones sensibles de la personne */
 function candOf(g,p,skip){const bar=p.mat!=="salle"&&Array.isArray(p.eq)&&p.eq.includes("barre"),f=p.sexe==="f",li=liOf(p);let a=pool(g,p.mat,+p.niveau,f,bar).all;if(!a.length&&p.mat!=="corps")a=pool(g,"corps",+p.niveau,f,bar).all;
 return a.filter(x=>exOK(x,p)&&!skip.includes(x.n)&&!(li&&JUMP.test(x.n)))}
 const TYP=x=>x.c>0?"polyarticulaire":"isolation";
 /* Consigne du coach pour une séance (semaine w, séance j) */
 const coNote=(N,w,j)=>{N=N||{};return N[w+"-"+j]||N["*-"+j]||""};
-const modTx=r=>r.t==="sw"?`${r.a} → ${r.b}`:r.t==="rm"?`${r.a} retiré`:`${r.b} ajouté (${r.s} séries)`;
+const modTx=r=>r.t==="home"?"Séance faite à la maison, sans matériel":r.t==="sw"?`${r.a} → ${r.b}`:r.t==="rm"?`${r.a} retiré`:`${r.b} ajouté (${r.s} séries)`;
 const modSc=r=>r.c==="*"?"partout":/^\*-/.test(r.c)?"chaque semaine, séance "+(+r.c.slice(2)+1):"une seule séance";
+/* ---------- Séance à la maison, sans matériel ----------
+Règle {c:"w-j",t:"home"}, posée sur la séance du jour. Chaque exercice qui demande du matériel est remplacé par un exercice
+au poids du corps du même muscle (même type si possible) : mêmes séries, répétitions réglées comme pour « Remplacer ».
+Le reste (ordre, volume par muscle, consignes) ne bouge pas. Les séances de course, mobilité et cardio dehors restent telles quelles. */
+const corpsOK=x=>x.e.includes("C")&&!/^(Tractions|Dips aux)/.test(x.n);
+const HPF={cui:["Squat bulgare","Fentes","Squat tempo lent","Step-up sur chaise","Squat Cossack","Squat pistolet assisté","Squat sur banc (box squat)","Step-down contrôlé","Chaise murale"],
+pec:["Pompes","Pompes pieds surélevés","Pompes lentes","Pompes serrées","Pompes mains surélevées","Pompes archer"],dos:["Rowing inversé","Rowing inversé supination","Superman au sol"],dlp:["Y-T-W au sol"],
+epa:["Pike push-ups","Pike pieds surélevés","Poirier contre le mur"],isc:["Soulevé roumain une jambe","Pont une jambe","Curl ischios avec serviette"],
+fes:["Hip thrust une jambe","Pont fessier pieds surélevés","Fentes arrière","Step-up latéral","Fente latérale","Pont fessier lent","Pont fessier","Frog pump"],
+tri:["Dips sur chaise","Pompes diamant"],bic:["Curl inversé sous une table"],mol:["Mollets à une jambe","Mollets sur une marche","Tibialis raise"],
+abd:["Dead bug","Planche (gainage)","Crunch inversé","Relevé de jambes","Gainage latéral","Position creuse (hollow hold)","Bird dog","Crunch","Russian twist"],
+car:["Montées de genoux","Burpees","Mountain climbers","Jumping jacks","Boxe dans le vide","Skaters (patineur)","Corde à sauter"]};
+/* Pour les grands mouvements du 5/3/1 : la variante au poids du corps la plus exigeante */
+const H531={Squat:["cui",["Squat pistolet assisté","Squat bulgare","Fentes"]],"Développé couché":["pec",["Pompes archer","Pompes pieds surélevés","Pompes"]],"Soulevé de terre":["isc",["Soulevé roumain une jambe","Pont une jambe"]],"Développé militaire":["epa",["Pike pieds surélevés","Pike push-ups"]]};
+const homeP=p=>({...p,mat:"corps",eq:["banc"].concat(p.mat!=="salle"&&Array.isArray(p.eq)&&p.eq.includes("barre")?["barre"]:[])});
+/* Si le muscle n’a plus d’équivalent libre dans la séance : un muscle voisin qui travaille dans le même mouvement */
+const HFB={epa:["dlp"],dlp:["epa","dos"],bic:["dos"],tri:["pec"],pec:["tri"],dos:["dlp"],cui:["fes"],fes:["cui","isc"],isc:["fes"],mol:["cui"]};
+function homeAlt(x,p,used,pf,nb){const pc=homeP(p),li=liOf(p),f=p.sexe==="f",bar=pc.eq.includes("barre");
+const a=pool(x.g,"corps",+p.niveau,f,bar).all.filter(c=>exOK(c,pc)&&!used.has(c.n)&&!(li&&JUMP.test(c.n)));
+if(!a.length){if(nb)return null;for(const g of HFB[x.g]||[]){const y=homeAlt({...x,g},p,used,HPF[g]&&x.g==="bic"?["Rowing inversé supination","Rowing inversé"]:x.g==="tri"?["Pompes serrées","Pompes diamant"]:null,1);if(y)return y}return null}
+pf=pf||HPF[x.g]||[];const jx=JUMP.test(x.n),tx=TIME.test(x.n),sc=c=>((c.c>0)!==(x.c>0)?100:0)+(JUMP.test(c.n)&&!jx?50:0)+(TIME.test(c.n)!==tx?20:0)+(pf.includes(c.n)?pf.indexOf(c.n):15);
+return a.slice().sort((u,v)=>sc(u)-sc(v)||a.indexOf(u)-a.indexOf(v))[0]}
+const HTX=[[/abduction avec élastique/g,"abduction couché sur le côté"],[/[Mm]arche latérale avec élastique/g,m=>m[0]+"arche latérale en demi-squat"],[/fire hydrants avec élastique/g,"fire hydrants"],[/pas latéraux avec élastique/g,"pas latéraux en demi-squat"],
+[/Rotation externe à l’élastique, coude collé/g,"Rotation externe allongé sur le côté, coude collé (avec une bouteille d’eau)"],[/rameur ou vélo,/g,"montées de genoux ou marche rapide,"],[/vélo ou marche rapide en pente,/g,"montées de genoux ou marche rapide en côte,"],[/marche rapide ou vélo,/g,"marche rapide ou montées de genoux,"],
+[/^Finisher 8 min : portage de charges ou marche rapide chargée, 4 × 40 m$/,"Finisher 8 min : 4 tours de (40 s de chaise murale, 20 s de montées de genoux), 30 s de repos"],
+[/^Lancers de ballon de \d+ kg \(ou lancers poitrine contre un mur\)/,"Pompes explosives (ou pompes rapides mains surélevées)"],
+[/^(Vélo|Rameur|Elliptique ou ski-erg|Natation continue ou aquagym|Marche rapide en pente \(ou tapis incliné\)) : /,"Marche rapide ou course facile, dehors : "],[/^Vélo, rameur, natation ou elliptique : /,"Marche rapide ou course facile : "],
+[/^(Progression : quand tu atteins le haut de la fourchette|Choisis la charge \(sac, haltères, élastique\)).*$/,"Progression : choisis la variante (ou un sac à dos chargé) qui garde la marge indiquée. Au-delà de 15 répétitions faciles, passe à la variante plus difficile (voir le Guide)."]];
+function homeS(s,p,ow){if(p.mat==="corps")return s;const pc=homeP(p),it=s.it.slice(),tg=s.tg?s.tg.slice():null,used=new Set(),L=+p.niveau,li=liOf(p);let ch=0,ds=0,f5=0;
+it.forEach(l=>{const m=/^(.+?) : /.exec(l);if(m&&LBN[m[1]])used.add(m[1])});
+for(let i=0;i<it.length;i++){let l=it[i];
+/* Grands mouvements 5/3/1 : sans barre, les pourcentages n’ont pas de sens */
+const m5=l.match(/^(Squat|Développé couché|Soulevé de terre|Développé militaire) \(séries 5\/3\/1\) : /);
+if(m5){const[g,pf]=H531[m5[1]],x=homeAlt({n:"",g,c:2,ra:1},p,used,pf);const bb=/^Supplémentaire « /.test(it[i+2]||"")||/^Supplémentaire « /.test(it[i+1]||"");
+if(x){used.add(x.n);it[i]=mkLine(x.n,TIME.test(x.n)?3:bb?5:3,repsFor(x,ow,p),ow,pc,{})}else{it.splice(i,1);if(tg)tg.splice(i,1);i--}ch=f5=1;continue}
+if(/^(Training Max de |Supplémentaire « |Si tu atteins moins de répétitions)/.test(l)){it.splice(i,1);if(tg)tg.splice(i,1);i--;ch=1;continue}
+if(/^Échauffement \d+ min, puis séries d’approche : \d+ %/.test(l)){it[i]=l.replace(/puis séries d’approche : .*$/,"puis 1 série facile de chaque exercice principal");ch=1;continue}
+if(/^Technique de la semaine : série « \+ »/.test(l)){it[i]="Technique de la semaine : prends la variante la plus difficile que tu maîtrises et arrête-toi 1 à 2 répétitions avant l’échec.";ch=1;continue}
+const m=/^(.+?) : (.*)$/.exec(l),o=m&&LBN[m[1]];
+if(o&&!corpsOK(o)){const x=homeAlt(o,p,used);
+if(!x){if(EXL.test(l)){ds-=+l.match(EXL)[2];it.splice(i,1);if(tg)tg.splice(i,1);i--;ch=1}continue}
+used.add(x.n);const e=l.match(EXL);
+if(e&&modOK(l)){let rr=e[3].replace(/ par côté$/,"");if(TIME.test(o.n)!==TIME.test(x.n)||(o.c===2&&o.ra===0)!==(x.c===2&&x.ra===0))rr=repsFor(x,ow,p);it[i]=mkLine(x.n,+e[2],rr,ow,pc,{})}
+else{let r=m[2].replace(/ · environ .*$/,"");if(UNIT[o.n]&&r.startsWith(UNIT[o.n]))r=amt(x,[8,10,12][L])+r.slice(UNIT[o.n].length);it[i]=x.n+" : "+r}
+ch=1;continue}
+let t=l;HTX.forEach(([re,v])=>{t=t.replace(re,v)});if(li)t=t.replace("Pompes explosives (ou pompes rapides mains surélevées)","Pompes rapides mains surélevées");if(t!==l){it[i]=t;ch=1}}
+if(!ch)return s;
+if(f5){const r=Math.max(0,it.findIndex(z=>/^Repos/.test(z)));if(tg)tg.splice(r,0,"");it.splice(r,0,"À la maison, le 5/3/1 est mis en pause : sans barre, ses pourcentages ne s’appliquent pas. Cette séance entretient ta force ; ta progression reprend à la prochaine séance avec charge.")}
+wupFix(it,pc);return{...s,it,tg:tg&&tg.length===it.length?tg:undefined,home:1,d:Math.max(10,r5(parseInt(s.d)+ds*2.4))+" min"}}
+/* La séance peut-elle passer « à la maison » ? */
+const homeCan=(s,p,ow)=>!!s&&!s.home&&homeS(s,p,ow)!==s;
 
 /* Règles qui touchent une séance donnée */
 const modsOf=(w,j)=>(data.mods||[]).filter(r=>r.c===w+"-"+j||r.c==="*-"+j);
@@ -1654,6 +1774,10 @@ function modBind(w){A.querySelectorAll("[data-ed]").forEach(b=>b.onclick=e=>{e.p
 function modCard(){const G=(data.mods||[]).map((r,i)=>[r,i]).filter(([r])=>r.c==="*"||/^\*-/.test(r.c));if(!G.length)return"";
 return`<div class="card" id="mdc"><h3>Mes exercices modifiés</h3><p class="mu" style="margin:0 0 8px">Ces changements s’appliquent à tout ton programme. Les changements d’une seule séance se gèrent dans la séance.</p><ul class="mdl">${G.map(([r,i])=>`<li><span><b>${esc(modTx(r))}</b><small>${esc(modSc(r))}</small></span><button class="o" data-mx="${i}">Annuler</button></li>`).join("")}</ul></div>`}
 function modCardBind(){A.querySelectorAll("[data-mx]").forEach(b=>b.onclick=async()=>{data.mods.splice(+b.dataset.mx,1);await save();render();flash("Changement annulé")})}
+/* « À la maison aujourd’hui » : sur la séance du jour. La séance s’adapte sans matériel (règle {c:"w-j",t:"home"}) */
+function homeT(w,j,s,ow){if(!s||!data.p)return"";const on=!!s.home;if(!on&&!homeCan(s,data.p,ow))return"";
+return`<label class="hmt"><input type="checkbox" role="switch" data-hm="${w}-${j}"${on?" checked":""}><span class="sw" aria-hidden="true"></span><span class="hmx"><b>À la maison aujourd’hui</b><small>${on?"Séance adaptée sans matériel : mêmes muscles, mêmes séries.":"Pas de salle ? La séance s’adapte, sans matériel."}</small></span></label>`}
+function homeBind(root){root.querySelectorAll("[data-hm]").forEach(c=>{c.onclick=e=>e.stopPropagation();c.onchange=async()=>{const k=c.dataset.hm,[w,j]=k.split("-");data.mods=(data.mods||[]).filter(r=>!(r.t==="home"&&r.c===k));if(c.checked)data.mods.push({c:k,t:"home",d:today()});if(data.mods.length>80)data.mods=data.mods.slice(-80);OS[k]=true;render();flash(c.checked?"Séance adaptée : à la maison, sans matériel":"Séance en salle rétablie");await save()}})}
 
 /* ---------- Version 12 : finitions « premium » ---------- */
 const RM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
@@ -1910,7 +2034,7 @@ ${m.al.map(a=>`<div class="warn">${esc(a)}</div>`).join("")}
 <div class="st">${st("Fibres",m.fib,"g / jour","Légumes, fruits, céréales complètes")}${st("Protéines",m.protLo+"–"+m.protHi,"g / jour","Fourchette conseillée, vise "+m.prot+" g")}
 ${st("Eau",cm(m.eau),"L / jour","+ 0,5 L les jours d’entraînement")}${st("Métabolisme de base",m.bmr,"kcal","Ce que ton corps brûle au repos")}${st("Dépense estimée",m.tdee,"kcal / jour","Avec ton activité (× "+String(m.pal).replace(".",",")+")")}${st("Par repas",m.perMeal,"g de protéines","Sur 4 repas dans la journée")}${st("Jour d’entraînement",m.kcalT,"kcal","Un peu plus de glucides")}${st("Jour de repos",m.kcalR,"kcal","Un peu moins de glucides")}</div>
 ${trendCard()}
-<section class="card"><div class="ch2"><h3>Jour d’entraînement et jour de repos</h3></div><div class="tbl"><table><tr><th></th><th>kcal</th><th>Protéines</th><th>Glucides</th><th>Lipides</th></tr>${row("Jour d’entraînement",m.kcalT,m.prot+" g",m.cT+" g",m.fat+" g")}${row("Jour de repos",m.kcalR,m.prot+" g",m.cR+" g",m.fat+" g")}${row("<b>Moyenne</b>","<b>"+m.kcal+"</b>","<b>"+m.prot+" g</b>","<b>"+m.carb+" g</b>","<b>"+m.fat+" g</b>")}</table></div><p class="mu">Mange un peu plus de glucides les jours où tu t’entraînes, un peu moins les jours de repos. Sur la semaine, la moyenne reste à ${m.kcal} kcal.</p></section>
+<section class="card"><div class="ch2"><h3>Jour d’entraînement et jour de repos</h3></div><div class="tbl"><table><tr><th></th><th>kcal</th><th>Protéines</th><th>Glucides</th><th>Lipides</th></tr>${row("Jour d’entraînement",m.kcalT,m.prot+" g",m.cT+" g",m.fat+" g")}${row("Jour de repos",m.kcalR,m.prot+" g",m.cR+" g",m.fat+" g")}${row("<b>Moyenne</b>","<b>"+m.kcal+"</b>","<b>"+m.prot+" g</b>","<b>"+m.carb+" g</b>","<b>"+m.fat+" g</b>")}</table></div><p class="mu">Mange un peu plus de glucides les jours où tu t’entraînes, un peu moins les jours de repos. Sur la semaine, la moyenne reste à ${m.kcal} kcal.</p>${hyOn(p)?`<p class="mu">Programme à deux objectifs : les calories et les protéines suivent ton objectif principal (${esc(OBJ[p.objectif].toLowerCase())}). Les jours de course (sortie longue, seuil, fractionné), place la plus grande partie de tes glucides avant et après la séance : c’est ce qui recharge le mieux tes réserves pour la séance suivante.</p>`:""}</section>
 <section class="card"><div class="ch2"><h3>Ta composition corporelle</h3></div><div class="tbl"><table>
 <tr><td>Masse grasse</td><td>${m.known?"":"≈ "}${cm(m.mg)} % · ${cm(m.fm)} kg</td></tr>
 <tr><td>Masse maigre</td><td>${cm(m.lbm)} kg</td></tr>
@@ -1939,8 +2063,13 @@ $("#nv").onclick=e=>{const b=e.target.closest("button");if(b){tab=b.dataset.t;re
 $("#av").onclick=()=>{if(data.p&&!editing){tab="c";render();scrollTo(0,0)}};
 try{matchMedia("(prefers-color-scheme: light)").addEventListener("change",()=>{if(!(data.theme==="l"||data.theme==="d"))render()})}catch(e){}
 onAuthStateChanged(auth,async u=>{user=u;editing=false;wk=0;data={p:null,done:{},tests:[],logs:{},checks:{},body:[],lifts:{}};
-if(u){try{const s=await getDoc(doc(db,"clients",u.uid));if(s.exists())data={...data,...s.data()};try{const cs=await getDoc(doc(db,"coach",u.uid));CO=cs.exists()?cs.data()||{}:{}}catch(e){CO={}}try{initBadges()}catch(e){}try{if(data.p&&!data.dep)data.dep=depDe(data)}catch(e){}if(data.p){try{const G0=gen(data.p,data.tests,data.lifts),nx=nextS(G0);wk=nx?nx[0]:G0.length-1}catch(e){}}}catch(e){A.innerHTML='<div class="warn">Impossible de charger ton profil. Vérifie ta connexion puis recharge la page.</div>';return}}
+if(u){try{const s=await getDoc(doc(db,"clients",u.uid));if(s.exists())data={...data,...s.data()};try{const cs=await getDoc(doc(db,"coach",u.uid));CO=cs.exists()?cs.data()||{}:{}}catch(e){CO={}}try{initBadges()}catch(e){}try{if(data.p&&!data.dep)data.dep=depDe(data)}catch(e){}if(data.p){try{const G0=genH(data.p,data.tests,data.lifts),nx=nextS(G0);wk=nx?nx[0]:G0.length-1}catch(e){}}}catch(e){A.innerHTML='<div class="warn">Impossible de charger ton profil. Vérifie ta connexion puis recharge la page.</div>';return}}
 render()});
+/* Changements du coach : relus quand l’appli revient au premier plan (au plus toutes les 20 s), sans attendre une reconnexion */
+let coT=0;async function coRefresh(){if(!user||!data.p||Date.now()-coT<20000)return;coT=Date.now();
+try{const cs=await getDoc(doc(db,"coach",user.uid)),n=cs.exists()?cs.data()||{}:{};if(JSON.stringify(n)===JSON.stringify(CO))return;CO=n;
+if(typeof RUN!=="undefined"&&RUN)return;if(editing||(typeof dg!=="undefined"&&dg&&dg.open))return;render()}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")coRefresh()});addEventListener("focus",coRefresh);
 </script>
 </body>
 </html>
